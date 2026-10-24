@@ -48,22 +48,29 @@ geo_deptos = datos["geo_departamentos"]
 
 # --- Sidebar ---
 # Ojo: los filtros solo afectan a las secciones 2 y 3. Los mapas se calculan
-# con el dataset completo, si no, cambia el color de las provincias al filtrar
+# con el dataset completo, si no cambia el color de las provincias al filtrar
 # por sexo y se pierde la lectura territorial.
 with st.sidebar:
     st.title("Filtros")
     st.caption("Solo afectan a las secciones 02 y 03.")
 
+    # df["SEXO"].unique() devuelve un numpy array. Streamlit compara las
+    # opciones con == en cada rerun, y con numpy eso da un array de booleanos
+    # en lugar de un booleano: el widget cree que cambiaron las opciones y
+    # dispara un rerun → se calcula de nuevo → loop. Con .tolist() pasa a ser
+    # una lista de Python, que se compara bien.
+    opciones_sexo = sorted(df["SEXO"].dropna().unique().tolist())
     sexo_sel = st.multiselect(
         "Sexo",
-        options=df["SEXO"].dropna().unique(),
-        default=list(df["SEXO"].dropna().unique()),
+        options=opciones_sexo,
+        default=opciones_sexo,
     )
 
+    opciones_proceso = sorted(df["PROCESO_ADMISION"].dropna().unique().tolist())
     proceso_sel = st.multiselect(
         "Proceso de admisión",
-        options=df["PROCESO_ADMISION"].dropna().unique(),
-        default=list(df["PROCESO_ADMISION"].dropna().unique()),
+        options=opciones_proceso,
+        default=opciones_proceso,
     )
 
     with st.expander("Fuente y licencia"):
