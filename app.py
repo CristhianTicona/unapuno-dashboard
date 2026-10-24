@@ -179,12 +179,13 @@ section_header("03", TITULO_SECCION_3, SUBTITULO_SECCION_3)
 st.plotly_chart(barras_brecha_escolar(agg_provincias), use_container_width=True, config=PLOTLY_CONFIG)
 
 insight_box(
-    "<strong>Que nos indica:</strong> el largo de la barra es el puntaje mediano de la provincia, "
-    "y el color indica el % de colegios privados.<br><br>"
-    "• <strong>Yunguyo</strong>: casi sin colegios privados, pero segundo mejor puntaje.<br>"
-    "• <strong>Moho</strong>: mejor puntaje y 30% privado, pero solo 23 ingresantes.<br>"
-    "• <strong>Chucuito</strong>: peor puntaje, con 7% privado.<br><br>"
-    "El origen escolar importa, pero no marca el destino."
+    "<strong>¿Qué nos indica este gráfico?</strong> El largo de la barra es el puntaje mediano de cada provincia, "
+    "y el color es el porcentaje de sus ingresantes que vienen de colegios privados.<br><br>"
+    "Al cruzar ambos datos, vemos que <strong>no hay una relación directa</strong>: "
+    "Yunguyo casi no tiene colegios privados, pero logra el segundo mejor puntaje. "
+    "Moho tiene el puntaje más alto y un 30% de privados, pero su muestra es muy chica (23 ingresantes). "
+    "Chucuito, por su parte, tiene el puntaje más bajo con un 7% de privados.<br><br>"
+    "En conclusión, el origen escolar influye, pero no es el único factor que explica el rendimiento."
 )
 
 st.caption(FUENTE_GRAFICOS)
