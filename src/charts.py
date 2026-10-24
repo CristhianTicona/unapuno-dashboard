@@ -30,39 +30,36 @@ def _base(fig, **overrides):
 
 def _base_mapa(fig, **overrides):
     """
-    Configuración especial para los mapas.
-    Forzamos un fondo blanco (paper, plot y geo) porque en modo oscuro los
-    mapas se pierden en el fondo. Un recuadro blanco da el contraste justo
-    para que los colores de las provincias resalten.
+    Configuración para los mapas. Volvemos al fondo transparente para que
+    se integren con el modo oscuro/claro de la página.
     """
     layout = dict(
         template="streamlit",
         font=dict(family=FUENTE, size=12),
-        paper_bgcolor="#FFFFFF",
-        plot_bgcolor="#FFFFFF",
-        margin=dict(l=10, r=10, t=30, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=0, r=0, t=10, b=0),
         hoverlabel=dict(font=dict(family=FUENTE, size=12)),
-        # Colorbar a la derecha, de tamaño razonable
+        # Colorbar a la derecha, un poco más alta para que no flote
         coloraxis_colorbar=dict(
             title="Ingresantes",
-            thickness=15,
-            len=0.6,
+            thickness=10,
+            len=0.7,
             y=0.5,
             yanchor="middle",
             x=1.0,
             xanchor="left",
-            tickfont=dict(size=11),
+            tickfont=dict(size=11, color="#888888"),
+            titlefont=dict(size=12, color="#888888"),
         )
     )
     layout.update(overrides)
     fig.update_layout(**layout)
     
-    # Fondo del mapa geográfico
     fig.update_geos(
         fitbounds="locations", 
         visible=False,
-        bgcolor="#FFFFFF",
-        landcolor="#F3F4F6", # Gris casi blanco para las provincias sin datos
+        bgcolor="rgba(0,0,0,0)",
     )
     return fig
 
@@ -82,16 +79,15 @@ def mapa_nacional(agg_deptos, geo_deptos):
         labels={"n_ingresantes": "Ingresantes", "DEPARTAMEN": "Departamento"},
     )
 
-    # Como usamos logaritmo, los números de la colorbar serían 0, 2, 4, 6...
-    # Los ocultamos y dejamos solo el título "Ingresantes". El valor real
-    # sale en el hover.
+    # Ocultamos los números de la colorbar porque al usar logaritmo (2, 4, 6)
+    # no se entienden. El valor real sale en el hover.
     return _base_mapa(
         fig, 
-        height=520, 
+        height=500, 
         coloraxis_colorbar=dict(
             title="Ingresantes",
-            thickness=12,
-            len=0.5,
+            thickness=10,
+            len=0.7,
             tickvals=[], 
             ticktext=[],
         )
@@ -121,28 +117,32 @@ def mapa_puno(agg_provincias, geo_provincias):
         },
     )
 
-    # Etiquetas. Al tener fondo blanco, las letras ahora son oscuras.
     cent = geo_provincias.copy()
     cent["cx"] = _centroides_puno(geo_provincias).x.values
     cent["cy"] = _centroides_puno(geo_provincias).y.values
     cent = cent.merge(agg_provincias[["PROV_NORM", "n_ingresantes"]], on="PROV_NORM")
+    
+    # Letras blancas con fondo oscuro semitransparente para que se lean 
+    # tanto en modo claro como oscuro.
     for _, row in cent.iterrows():
         fig.add_annotation(
             x=row["cx"], y=row["cy"],
             text=f"<b>{row['PROV_NORM'].title()}</b><br>{int(row['n_ingresantes'])}",
             showarrow=False,
-            font=dict(size=10, color="#1F2A30"), # Letra oscura
-            bgcolor="rgba(255,255,255,0.7)", # Fondo blanco semitransparente
+            font=dict(size=10, color="white"),
+            bgcolor="rgba(0,0,0,0.6)",
             borderpad=2,
         )
 
     return _base_mapa(
         fig, 
-        height=520, 
+        height=500, 
         coloraxis_colorbar=dict(
             title="Ingresantes",
-            thickness=12,
-            len=0.5,
+            thickness=10,
+            len=0.7,
+            tickfont=dict(size=11, color="#888888"),
+            titlefont=dict(size=12, color="#888888"),
         )
     )
 
