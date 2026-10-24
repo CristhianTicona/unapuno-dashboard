@@ -1,5 +1,5 @@
 """
-Estilos visuales del dashboard.
+Estilos visuales (CSS) para el dashboard.
 """
 
 import streamlit as st
@@ -7,7 +7,7 @@ from src.constants import COLOR_TERRITORIO, COLOR_HALLAZGO
 
 CSS = f"""
 <style>
-/* --- Hero --- */
+/* Portada principal */
 .hero {{
     padding: 2rem 0 2rem 0;
     border-bottom: 1px solid rgba(128, 128, 128, 0.2);
@@ -55,7 +55,7 @@ CSS = f"""
     letter-spacing: 0.1em;
 }}
 
-/* --- Encabezados de sección --- */
+/* Títulos de las secciones (01, 02, 03) */
 .section-header {{
     display: flex;
     align-items: flex-start;
@@ -90,7 +90,7 @@ CSS = f"""
     max-width: 850px;
 }}
 
-/* --- Tarjetas de métricas --- */
+/* Tarjetas de métricas */
 .metric-card {{
     background-color: rgba(128, 128, 128, 0.05);
     border: 1px solid rgba(128, 128, 128, 0.15);
@@ -126,7 +126,7 @@ CSS = f"""
     font-style: italic;
 }}
 
-/* --- Caja de insight --- */
+/* Caja para resaltar hallazgos */
 .insight-box {{
     background-color: rgba(217, 123, 41, 0.08);
     border-left: 4px solid {COLOR_HALLAZGO};
@@ -138,31 +138,29 @@ CSS = f"""
     margin: 1.5rem 0 0 0;
 }}
 
-/* --- Divisor --- */
+/* Separadores */
 .divider {{
     height: 1px;
     background-color: rgba(128, 128, 128, 0.2);
     margin: 3rem 0 2rem 0;
 }}
 
-/* --- Layout --- */
+/* Ajustes de layout de Streamlit */
 .block-container {{
     padding-top: 1.5rem !important;
     padding-bottom: 2rem !important;
     max-width: 1180px !important;
 }}
-
 [data-testid="stDataFrame"] {{
     border: 1px solid rgba(128, 128, 128, 0.2);
     border-radius: 8px;
     overflow: hidden;
 }}
-
 .js-plotly-plot .plotly .modebar {{
     display: none !important;
 }}
 
-/* --- Footer --- */
+/* Footer */
 .footer {{
     border-top: 1px solid rgba(128, 128, 128, 0.2);
     padding-top: 1.5rem;
