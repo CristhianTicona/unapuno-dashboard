@@ -52,9 +52,6 @@ def _base_mapa(fig, **overrides):
 
 def mapa_nacional(agg_deptos, geo_deptos):
     df = agg_deptos.copy()
-    # Aplicamos logaritmo (log1p) al color. Como Puno tiene 1795 y Cusco 39,
-    # en escala normal Cusco se veía del mismo color que el fondo. Con el 
-    # logaritmo logramos que se note la presencia de los otros departamentos.
     df["n_log"] = np.log1p(df["n_ingresantes"])
 
     fig = px.choropleth(
@@ -68,31 +65,23 @@ def mapa_nacional(agg_deptos, geo_deptos):
         labels={"n_ingresantes": "Ingresantes", "DEPARTAMEN": "Departamento"},
     )
 
-    # Como usamos logaritmo, la barra de colores mostraría números raros (0, 2, 4).
-    # Le forzamos los ticks reales calculando la posición en la escala logarítmica.
     ticks_pos = [np.log1p(x) for x in [0, 10, 100, 500, 1000, 1800]]
     ticks_lbl = ["0", "10", "100", "500", "1000", "1800"]
 
+    # SUBIMOS LA ALTURA A 600 Y AJUSTAMOS LA BARRA (len=0.8)
     return _base_mapa(
         fig, 
-        height=500, 
+        height=600, 
         coloraxis_colorbar=dict(
             title="Ingresantes",
-            thickness=10,
-            len=0.7,
+            thickness=12,
+            len=0.8,
             tickvals=ticks_pos,
             ticktext=ticks_lbl,
             tickfont=dict(size=11, color="#888888"),
             titlefont=dict(size=12, color="#888888"),
         )
     )
-
-def _centroides_puno(geo_provincias):
-    # Geopandas tira warning si calculas centroides en lat/lon.
-    # Pasamos el mapa a UTM 19S (que es la zona de Puno), calculamos el centro 
-    # y volvemos a lat/lon para que Plotly lo dibuje.
-    en_utm = geo_provincias.to_crs(32719)
-    return en_utm.geometry.centroid.to_crs(4326)
 
 def mapa_puno(agg_provincias, geo_provincias):
     fig = px.choropleth(
@@ -114,8 +103,6 @@ def mapa_puno(agg_provincias, geo_provincias):
         },
     )
 
-    # Ponemos el nombre y el número arriba de cada provincia para que no 
-    # haya que pasar el mouse. Letras blancas con fondo oscuro para que se lean bien.
     cent = geo_provincias.copy()
     cent["cx"] = _centroides_puno(geo_provincias).x.values
     cent["cy"] = _centroides_puno(geo_provincias).y.values
@@ -131,13 +118,14 @@ def mapa_puno(agg_provincias, geo_provincias):
             borderpad=2,
         )
 
+    # SUBIMOS LA ALTURA A 600 Y AJUSTAMOS LA BARRA (len=0.8)
     return _base_mapa(
         fig, 
-        height=500, 
+        height=600, 
         coloraxis_colorbar=dict(
             title="Ingresantes",
-            thickness=10,
-            len=0.7,
+            thickness=12,
+            len=0.8,
             tickfont=dict(size=11, color="#888888"),
             titlefont=dict(size=12, color="#888888"),
         )
