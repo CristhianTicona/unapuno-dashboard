@@ -14,8 +14,7 @@ RUTA_GEO_PROVINCIAS = DATA_DIR / "provincias_puno.geojson"
 RUTA_GEO_DEPARTAMENTOS = DATA_DIR / "departamentos_peru.geojson"
 
 
-# Paleta base. Usamos el teal (petróleo) como color institucional y el naranja
-# solo para destacar hallazgos. Así el ojo sabe dónde mirar.
+# Paleta base.
 COLOR_TERRITORIO = "#1C4E5C"
 COLOR_HALLAZGO = "#D97B29"
 COLOR_SECUNDARIO = "#6A8A3A"
@@ -23,14 +22,14 @@ COLOR_SECUNDARIO = "#6A8A3A"
 COLOR_FEMENINO = "#C6517C"
 COLOR_MASCULINO = "#2E5C8A"
 
-# Escala para mapas: de transparente (sin datos) a azul petróleo (máximo).
-# Usar un color sólido en vez de marrones hace que se vea más limpio y moderno.
+# Escala para los mapas. En vez de un gradiente transparente (que desaparecía 
+# con valores bajos), usamos un tono base sólido y subimos hasta el petróleo.
 ESCALA_CALOR = [
-    [0.0, "rgba(28, 78, 92, 0)"],
-    [0.4, "rgba(28, 78, 92, 0.3)"],
-    [1.0, COLOR_TERRITORIO],
+    [0.0, "#D1D5DB"],  # Gris claro para los deptos sin ingresantes
+    [0.1, "#9CA3AF"],  # Gris medio
+    [0.4, "#60A5FA"],  # Azul medio
+    [1.0, COLOR_TERRITORIO],  # Azul petróleo
 ]
-
 
 EYEBROW = "Datos abiertos · Proceso 2024-I"
 TITULO_APP = "Ingresantes UNA Puno 2024-I"
@@ -39,7 +38,7 @@ SUBTITULO_APP = (
     "Nacional del Altiplano en el proceso 2024-I."
 )
 
-TESIS = (
+IDEA_CENTRAL = (
     "La UNA Puno es territorialmente diversa, pero por dentro reproduce dos "
     "desigualdades: una de género en la elección de carrera (una brecha de 96 "
     "puntos porcentuales) y otra educativa que el origen escolar explica solo "
