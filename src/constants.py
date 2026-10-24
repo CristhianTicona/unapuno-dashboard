@@ -14,7 +14,7 @@ RUTA_AGG_DEPARTAMENTOS = DATA_DIR / "agg_departamentos.csv"
 RUTA_GEO_PROVINCIAS = DATA_DIR / "provincias_puno.geojson"
 RUTA_GEO_DEPARTAMENTOS = DATA_DIR / "departamentos_peru.geojson"
 
-# Paleta de colores. 
+# Paleta de colores
 COLOR_TERRITORIO = "#1C4E5C"     # Azul petróleo
 COLOR_HALLAZGO = "#D97B29"       # Naranja quemado
 COLOR_SECUNDARIO = "#6A8A3A"     # Verde andino
@@ -52,10 +52,9 @@ SUBTITULO_SECCION_1 = (
 
 TITULO_SECCION_2 = "¿Cómo se reparten?"
 SUBTITULO_SECCION_2 = (
-    "En total, la proporción es casi igual: 55% hombres y 45% mujeres. "
-    "Pero si miramos carrera por carrera, la historia cambia. Educación Inicial "
-    "tiene 100% de mujeres e Ingeniería Mecánica Eléctrica solo 4%. "
-    "Es una diferencia de 96 puntos porcentuales entre una carrera y otra."
+    "En el total, la proporción es casi paritaria: 55% hombres y 45% mujeres. "
+    "Pero al mirar por carrera, la diferencia es total: Educación Inicial tiene "
+    "100% de mujeres e Ingeniería Mecánica Eléctrica solo 4%. Es una brecha de 96 puntos porcentuales."
 )
 
 TITULO_SECCION_3 = "¿Qué explica las brechas?"
