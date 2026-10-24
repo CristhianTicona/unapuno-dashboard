@@ -1,42 +1,37 @@
 """
 Dashboard de ingresantes a la UNA Puno, proceso 2024-I.
-
-Un solo scroll: portada, dataset, mapa nacional + provincial, segregación de
-género por carrera, brecha escolar entre provincias. Los filtros del sidebar
-solo tocan las secciones 2 y 3.
 """
 
 import streamlit as st
 import pandas as pd
 
 from src.constants import (
-    TITULO_APP, SUBTITULO_APP, TESIS,
+    EYEBROW, TITULO_APP, SUBTITULO_APP, TESIS,
     TITULO_SECCION_1, SUBTITULO_SECCION_1,
     TITULO_SECCION_2, SUBTITULO_SECCION_2,
     TITULO_SECCION_3, SUBTITULO_SECCION_3,
     CIERRE, FUENTE_GRAFICOS, PLOTLY_CONFIG,
+    COLOR_FEMENINO, COLOR_MASCULINO,
 )
 from src.data_loader import cargar_todo
 from src.charts import (
     mapa_nacional, mapa_puno, barras_externos,
-    donut_proceso, barras_genero_carrera, scatter_brecha_escolar,
+    donut_proceso, barras_genero_carrera, barras_brecha_escolar,
 )
-
+from src.styles import (
+    aplicar_estilos, hero, section_header, metric_card, insight_box,
+    divider, footer,
+)
 
 st.set_page_config(
     page_title=TITULO_APP,
-    page_icon="🎓",
     layout="wide",
 )
+aplicar_estilos()
 
-
-# Streamlit re-ejecuta el script en cada interacción, así que cargamos una vez
-# y dejamos que st.cache_data haga el trabajo. Sin esto, cada click en un
-# filtro vuelve a leer parquet + geojson y se nota.
 @st.cache_data(show_spinner="Cargando datos...")
 def _cargar():
     return cargar_todo()
-
 
 datos = _cargar()
 df = datos["ingresantes"]
@@ -45,282 +40,167 @@ agg_deptos = datos["agg_departamentos"]
 geo_provincias = datos["geo_provincias"]
 geo_deptos = datos["geo_departamentos"]
 
-
-# --- Sidebar ---
-# Ojo: los filtros solo afectan a las secciones 2 y 3. Los mapas se calculan
-# con el dataset completo, si no cambia el color de las provincias al filtrar
-# por sexo y se pierde la lectura territorial.
+# --- Sidebar (sin filtros, solo metadatos) ---
 with st.sidebar:
-    st.title("Filtros")
-    st.caption("Solo afectan a las secciones 02 y 03.")
-
-    # df["SEXO"].unique() devuelve un numpy array. Streamlit compara las
-    # opciones con == en cada rerun, y con numpy eso da un array de booleanos
-    # en lugar de un booleano: el widget cree que cambiaron las opciones y
-    # dispara un rerun → se calcula de nuevo → loop. Con .tolist() pasa a ser
-    # una lista de Python, que se compara bien.
-    opciones_sexo = sorted(df["SEXO"].dropna().unique().tolist())
-    sexo_sel = st.multiselect(
-        "Sexo",
-        options=opciones_sexo,
-        default=opciones_sexo,
+    st.title("Sobre el dashboard")
+    st.markdown(
+        "Este análisis se basa en los datos de los ingresantes a la Universidad "
+        "Nacional del Altiplano en el proceso 2024-I."
     )
 
-    opciones_proceso = sorted(df["PROCESO_ADMISION"].dropna().unique().tolist())
-    proceso_sel = st.multiselect(
-        "Proceso de admisión",
-        options=opciones_proceso,
-        default=opciones_proceso,
-    )
-
-    with st.expander("Fuente y licencia"):
+    with st.expander("Fuente y licencia", expanded=True):
         st.markdown("""
-        - **Fuente:** Universidad Nacional del Altiplano (datos abiertos)
+        - **Fuente:** Plataforma Nacional de Datos Abiertos
+        - **Entidad:** Universidad Nacional del Altiplano
         - **Licencia:** Open Data Commons Attribution
-        - **Marco legal:** Ley N° 27806 (Transparencia)
-        - **Periodo:** 2024-I (corte transversal)
+        - **Periodo:** 2024-I
         """)
 
     with st.expander("Decisiones de limpieza"):
         st.markdown("""
-        - El UBIGEO del dataset no sigue el estándar INEI. Puno aparece
-          con código `20` (debería ser `21`) y las provincias están
-          desalineadas desde la 2105. Cruzamos con el shapefile por
-          nombre, no por código.
-        - Un caso de doble ingreso (mismo DNI, CEPREUNA + General).
-          Nos quedamos con el puntaje más alto.
-        - `TIPO_COLEGIO` venía en 5 variantes → lo dejamos en 3.
-        - Un año de egreso 2029 (imposible). Queda anotado como limitación.
+        - El UBIGEO original no seguía el estándar INEI. Puno aparecía con código `20` y las provincias estaban desalineadas. Cruzamos con el mapa por **nombre**, no por código.
+        - 1 caso de doble ingreso (mismo DNI). Conservamos el puntaje más alto.
+        - `TIPO_COLEGIO` venía en 5 variantes → lo agrupamos en 3.
         """)
 
-
-df_filtrado = df[
-    df["SEXO"].isin(sexo_sel) & df["PROCESO_ADMISION"].isin(proceso_sel)
-].copy()
-
-
 # --- Portada ---
-st.title(f"🎓 {TITULO_APP}")
-st.caption(SUBTITULO_APP)
-st.markdown(f"> **Tesis:** *{TESIS}*")
-st.divider()
-
-
-# --- El dataset (metadatos + muestra) ---
-st.header("El dataset en números")
-st.markdown(
-    "Antes de la historia, los datos. Es un corte transversal del proceso "
-    "2024-I: 1.890 ingresantes con 25 variables demográficas, geográficas y "
-    "académicas. No hay serie temporal."
+hero(
+    eyebrow=EYEBROW,
+    titulo=TITULO_APP,
+    subtitulo=SUBTITULO_APP,
+    tesis=TESIS,
 )
 
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Registros", f"{len(df):,}")
-m2.metric("Variables", df.shape[1])
-m3.metric("Procesos de admisión", df["PROCESO_ADMISION"].nunique())
-m4.metric("Cobertura", "13 departamentos")
+# --- Metadatos ---
+st.markdown("### El dataset en números")
+st.markdown(
+    "Antes de la historia, los datos. Corte transversal del proceso 2024-I: "
+    "1.890 ingresantes con 25 variables demográficas, geográficas y académicas. "
+    "No hay serie temporal."
+)
 
+col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+with col_m1:
+    metric_card(f"{len(df):,}", "Registros")
+with col_m2:
+    metric_card(str(df.shape[1]), "Variables")
+with col_m3:
+    metric_card(str(df["PROCESO_ADMISION"].nunique()), "Procesos")
+with col_m4:
+    metric_card("13", "Departamentos")
+
+st.markdown("")
 col_muestra, col_resumen = st.columns([3, 2])
-
 with col_muestra:
-    st.markdown("**Algunas filas (identificadores hasheados en la fuente)**")
+    st.markdown("**Algunas filas (identificadores hasheados)**")
     muestra = df[[
         "SEXO", "DEPARTAMENTO_PROCEDENCIA", "PROVINCIA_PROCEDENCIA",
         "ESCUELA_PROFESIONAL", "TIPO_COLEGIO_NORM", "PUNTAJE",
     ]].head(8)
-    st.dataframe(muestra, use_container_width=True, hide_index=True)
-    st.caption(
-        f"Mostramos 8 de {len(df):,} registros. Los nombres y el DNI vienen "
-        "hasheados desde la fuente original."
-    )
+    st.dataframe(muestra, use_container_width=True, hide_index=True, height=320)
+    st.caption("Mostramos 8 de 1.890 registros. La fuente original viene hasheada.")
 
 with col_resumen:
-    st.markdown("**Resumen de las 25 columnas**")
-
-    # Columnas que agregamos nosotros durante la limpieza, no las mostramos
-    cols_internas = {
-        "PROV_NORM", "DEPTO_NORM", "UBIGEO_DIST",
-        "UBIGEO_PROV_RAW", "UBIGEO_DEP_RAW", "TIPO_COLEGIO_NORM",
-    }
-
-    mapa_tipos = {
-        "object": "texto",
-        "int64": "entero",
-        "float64": "decimal",
-    }
-
+    st.markdown("**Resumen de columnas**")
+    cols_internas = {"PROV_NORM", "DEPTO_NORM", "UBIGEO_DIST", "UBIGEO_PROV_RAW", "UBIGEO_DEP_RAW", "TIPO_COLEGIO_NORM"}
+    mapa_tipos = {"object": "texto", "int64": "entero", "float64": "decimal"}
     metadatos = []
     for col in df.columns:
-        if col in cols_internas:
-            continue
+        if col in cols_internas: continue
         metadatos.append({
-            "Variable": col if len(col) <= 25 else col[:22] + "...",
+            "Variable": col if len(col) <= 22 else col[:19] + "...",
             "Tipo": mapa_tipos.get(str(df[col].dtype), str(df[col].dtype)),
-            "Únicos": int(df[col].nunique()),
             "Nulos": int(df[col].isnull().sum()),
         })
+    st.dataframe(pd.DataFrame(metadatos), use_container_width=True, hide_index=True, height=320)
 
-    st.dataframe(
-        pd.DataFrame(metadatos),
-        use_container_width=True,
-        hide_index=True,
-        height=290,
-    )
-
-# Mini-gráfico: cómo se reparte el dataset por proceso.
-# Lo dejamos acá porque es un dato de "composición", no de análisis.
 st.markdown("**¿Cómo se compone el dataset por proceso de admisión?**")
-st.plotly_chart(
-    donut_proceso(df),
-    use_container_width=True,
-    config=PLOTLY_CONFIG,
-)
+_, col_donut, _ = st.columns([1, 2, 1])
+with col_donut:
+    st.plotly_chart(donut_proceso(df), use_container_width=True, config=PLOTLY_CONFIG)
 
 st.caption(FUENTE_GRAFICOS)
-st.divider()
+divider()
 
-
-# --- Sección 01: territorio ---
-st.header(TITULO_SECCION_1)
-st.markdown(SUBTITULO_SECCION_1)
+# --- Sección 01 ---
+section_header("01", TITULO_SECCION_1, SUBTITULO_SECCION_1)
 
 col1, col2 = st.columns(2)
-
 with col1:
-    st.subheader("Vista nacional")
-    st.plotly_chart(
-        mapa_nacional(agg_deptos, geo_deptos),
-        use_container_width=True,
-        config=PLOTLY_CONFIG,
-    )
-    st.caption(
-        "El 94.8% viene de Puno. El resto es goteo del sur: Cusco, Arequipa, "
-        "Lima, Tacna y otros departamentos con 1-3 casos."
-    )
+    st.markdown("**Vista nacional**")
+    st.plotly_chart(mapa_nacional(agg_deptos, geo_deptos), use_container_width=True, config=PLOTLY_CONFIG)
+    st.caption("El 94.8% viene de Puno. El resto es goteo del sur.")
 
 with col2:
-    st.subheader("Zoom a las 13 provincias de Puno")
-    st.plotly_chart(
-        mapa_puno(agg_provincias, geo_provincias),
-        use_container_width=True,
-        config=PLOTLY_CONFIG,
-    )
-    st.caption(
-        "La capital aporta 30.2%. Juliaca (San Román) 18.4%. El 51.4% restante "
-        "viene de las otras 11 provincias. No es una universidad de la ciudad, "
-        "es de la región."
-    )
-
-# Los 98 de fuera de Puno. Van aparte porque en el mapa se invisibilizan.
-st.subheader("¿Y los que vienen de fuera de Puno?")
-st.markdown(
-    "Son **98 ingresantes (5.2%)** en 12 departamentos. Analizamos si tenían "
-    "perfil propio y no: el puntaje medio es casi idéntico (1908 vs 1913) y el "
-    "gap educativo también (3.8 vs 3.4 años). Son goteo regional, no un grupo "
-    "diferenciado."
-)
-
-col_ext_graf, col_ext_datos = st.columns([2, 1])
-
-with col_ext_graf:
-    st.plotly_chart(
-        barras_externos(df),
-        use_container_width=True,
-        config=PLOTLY_CONFIG,
-    )
-
-with col_ext_datos:
-    st.markdown("**Carreras más elegidas:**")
-    st.markdown("""
-    - Turismo: 8 (16.3% de la carrera)
-    - Ing. Mecánica Eléctrica: 5
-    - Medicina Veterinaria: 5
-    - Odontología: 5
-    - Cs. de la Comunicación: 5
-    """)
-    st.markdown("**Modalidad de ingreso:**")
-    st.markdown("""
-    - Examen General: 56
-    - CEPREUNA: 30
-    - Primeros Puestos: 6
-    """)
-
-st.caption(FUENTE_GRAFICOS)
-st.divider()
-
-
-# --- Sección 02: género por carrera ---
-st.header(TITULO_SECCION_2)
-st.markdown(SUBTITULO_SECCION_2)
-
-g1, g2, g3, g4 = st.columns(4)
-g1.metric("Rango de segregación", "96 pts")
-g2.metric("Más feminizada", "Ed. Inicial", "100% F")
-g3.metric("Más masculinizada", "Ing. Mec. Eléctrica", "4% F")
-g4.metric("Carreras", "44")
+    st.markdown("**Zoom a Puno**")
+    st.plotly_chart(mapa_puno(agg_provincias, geo_provincias), use_container_width=True, config=PLOTLY_CONFIG)
+    st.caption("La capital aporta 30.2%. Juliaca (San Román) 18.4%. El 51.4% restante viene de las otras 11 provincias.")
 
 st.markdown("")
-st.plotly_chart(
-    barras_genero_carrera(df_filtrado),
-    use_container_width=True,
-    config=PLOTLY_CONFIG,
-)
-st.caption(
-    "Cada barra va del eje central hacia el porcentaje correspondiente. "
-    "La línea punteada marca el 50% (paridad)."
-)
+st.markdown("**¿Y los que vienen de fuera de Puno?**")
+st.markdown("Son **98 ingresantes (5.2%)** en 12 departamentos. Analizamos si tenían perfil propio y no: el puntaje medio es casi idéntico (1908 vs 1913).")
+
+col_ext_graf, col_ext_datos = st.columns([2, 1])
+with col_ext_graf:
+    st.plotly_chart(barras_externos(df), use_container_width=True, config=PLOTLY_CONFIG)
+with col_ext_datos:
+    st.markdown("**Carreras más elegidas:**")
+    st.markdown("- Turismo: 8\n- Ing. Mecánica Eléctrica: 5\n- Medicina Veterinaria: 5\n- Odontología: 5")
+    st.markdown("**Modalidad:**")
+    st.markdown("- Examen General: 56\n- CEPREUNA: 30\n- Primeros Puestos: 6")
+
 st.caption(FUENTE_GRAFICOS)
-st.divider()
+divider()
 
+# --- Sección 02 ---
+section_header("02", TITULO_SECCION_2, SUBTITULO_SECCION_2)
 
-# --- Sección 03: brecha escolar ---
-st.header(TITULO_SECCION_3)
-st.markdown(SUBTITULO_SECCION_3)
+g1, g2, g3, g4 = st.columns(4)
+with g1:
+    metric_card("96 pts", "Brecha de género", hint="Diferencia entre carreras extremas")
+with g2:
+    metric_card("Ed. Inicial", "Más feminizada", hint="100% F", color=COLOR_FEMENINO)
+with g3:
+    metric_card("Ing. Mecánica Eléctrica", "Más masculinizada", hint="4% F", color=COLOR_MASCULINO)
+with g4:
+    metric_card("44", "Carreras", hint="analizadas")
 
-st.plotly_chart(
-    scatter_brecha_escolar(agg_provincias),
-    use_container_width=True,
-    config=PLOTLY_CONFIG,
+st.markdown("")
+st.plotly_chart(barras_genero_carrera(df), use_container_width=True, config=PLOTLY_CONFIG)
+st.caption("Cada barra va del eje central hacia el porcentaje correspondiente. La línea punteada marca el 50%.")
+st.caption(FUENTE_GRAFICOS)
+divider()
+
+# --- Sección 03 ---
+section_header("03", TITULO_SECCION_3, SUBTITULO_SECCION_3)
+
+st.plotly_chart(barras_brecha_escolar(agg_provincias), use_container_width=True, config=PLOTLY_CONFIG)
+
+insight_box(
+    "<strong>Cómo leerlo:</strong> el largo de la barra es el puntaje mediano de la provincia, "
+    "y el color indica el % de colegios privados.<br><br>"
+    "• <strong>Yunguyo</strong>: casi sin colegios privados, pero segundo mejor puntaje.<br>"
+    "• <strong>Moho</strong>: mejor puntaje y 30% privado, pero solo 23 ingresantes.<br>"
+    "• <strong>Chucuito</strong>: peor puntaje, con 7% privado.<br><br>"
+    "El origen escolar importa, pero no marca el destino. Esa es la idea de esta sección."
 )
 
-st.markdown("""
-**Cómo leerlo:** cada burbuja es una provincia. El tamaño es la cantidad de
-ingresantes. En X, el % de colegios privados; en Y, el puntaje mediano. La
-línea punteada es la tendencia lineal.
-
-**Los casos que rompen la tendencia:**
-
-- **Yunguyo**: casi sin colegios privados (1.6%) pero segundo mejor puntaje
-  mediano (1962).
-- **Moho**: mejor puntaje (1966) y 30% privado, pero solo 23 ingresantes.
-- **Chucuito**: peor puntaje (1808) con 7.3% privado.
-
-El origen escolar correlaciona con el puntaje pero no lo determina. Esa es la
-idea de esta sección: la tendencia existe y tiene excepciones que pesan.
-""")
 st.caption(FUENTE_GRAFICOS)
-st.divider()
-
+divider()
 
 # --- Cierre ---
-st.header("Cierre")
-st.markdown(f"### {CIERRE}")
+st.markdown("### Cierre")
+st.markdown(f"> {CIERRE}")
 
+st.markdown("**Limitaciones:**")
 st.markdown("""
-**Limitaciones:**
-
 - Corte transversal (solo 2024-I). No podemos hablar de tendencias.
-- Solo tenemos ingresantes. No sabemos cuántos postularon y no entraron,
-  así que no hay tasa de admisión.
-- Provincias con muestra chica (Moho n=23, San Antonio de Putina n=38) tienen
-  promedios volátiles.
-- El UBIGEO del dataset no respeta el estándar INEI. Lo resolvimos por nombre
-  pero limita la reproducibilidad técnica del cruce.
-- "Pública de gestión privada" (n=19) es un híbrido que no desagregamos.
+- Solo tenemos ingresantes. No hay tasa de admisión.
+- Provincias con muestra chica (Moho n=23) tienen promedios volátiles.
+- El UBIGEO del dataset no respeta el estándar INEI. Lo resolvimos por nombre.
 """)
 
-st.divider()
-st.caption(
-    "Trabajo de Visualización de Datos · [Universidad] · Octubre 2026 · "
+footer(
+    "<strong>Visualización de Datos</strong> · [Universidad] · Octubre 2026<br>"
     "Sección 01: [Nombre 1] · Sección 02: [Nombre 2] · Sección 03: [Nombre 3]"
 )
