@@ -28,8 +28,7 @@ from src.styles import (
 st.set_page_config(page_title=TITULO_APP, layout="wide")
 aplicar_estilos()
 
-# Cargamos los datos. Streamlit ejecuta todo de nuevo en cada interacción, 
-# así que el @st.cache_data evita que se lea el parquet y el geojson de cero cada vez.
+# Cargamos los datos con caché para que no se lea el archivo de cero en cada interacción
 @st.cache_data(show_spinner="Cargando datos...")
 def _cargar():
     return cargar_todo()
@@ -147,7 +146,7 @@ with col_ext_graf:
     st.plotly_chart(barras_externos(df), use_container_width=True, config=PLOTLY_CONFIG)
 with col_ext_datos:
     st.markdown("##### Carreras más elegidas (de las 98 personas):")
-    st.markdown("- Turismo: 8 \n- Ing. Mecánica Eléctrica: 5\n- Medicina Veterinaria: 5\n- Odontología: 5")
+    st.markdown("- Turismo: 8 ingresantes\n- Ing. Mecánica Eléctrica: 5\n- Medicina Veterinaria: 5\n- Odontología: 5")
     st.markdown("##### Modalidad de ingreso:")
     st.markdown("- Examen General: 56\n- CEPREUNA: 30\n- Primeros Puestos: 6")
 
@@ -169,7 +168,7 @@ with g4:
 
 st.markdown("")
 st.plotly_chart(barras_genero_carrera(df), use_container_width=True, config=PLOTLY_CONFIG)
-st.caption("Cada barra va del eje central hacia el porcentaje correspondiente. La línea punteada marca el 50%. La diferencia entre los extremos es de 96 puntos porcentuales.")
+st.caption("Cada barra va del eje central hacia el porcentaje correspondiente. La línea punteada marca el 50%.")
 st.caption(FUENTE_GRAFICOS)
 divider()
 
