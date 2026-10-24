@@ -147,7 +147,7 @@ with col_ext_graf:
     st.plotly_chart(barras_externos(df), use_container_width=True, config=PLOTLY_CONFIG)
 with col_ext_datos:
     st.markdown("##### Carreras más elegidas (de las 98 personas):")
-    st.markdown("- Turismo: 8 ingresantes\n- Ing. Mecánica Eléctrica: 5\n- Medicina Veterinaria: 5\n- Odontología: 5")
+    st.markdown("- Turismo: 8 \n- Ing. Mecánica Eléctrica: 5\n- Medicina Veterinaria: 5\n- Odontología: 5")
     st.markdown("##### Modalidad de ingreso:")
     st.markdown("- Examen General: 56\n- CEPREUNA: 30\n- Primeros Puestos: 6")
 
