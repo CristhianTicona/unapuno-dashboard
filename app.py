@@ -71,7 +71,7 @@ hero(
 )
 
 # --- El dataset en números ---
-st.markdown("### Exploracion del Dataset")
+st.markdown("### El dataset en números")
 st.markdown(
     "Empezamos presentando los datos. Son 1.890 ingresantes del proceso 2024-I, "
     "con 25 columnas que describen su origen, género, tipo de colegio y puntaje. "
@@ -93,17 +93,16 @@ st.markdown("")
 col_muestra, col_resumen = st.columns([3, 2])
 
 with col_muestra:
-    st.markdown("#### Algunas filas (identificadores hasheados)")
+    st.markdown("#### Algunas filas (datos personales encriptados)")
     muestra = df[[
         "SEXO", "DEPARTAMENTO_PROCEDENCIA", "PROVINCIA_PROCEDENCIA",
         "ESCUELA_PROFESIONAL", "TIPO_COLEGIO_NORM", "PUNTAJE",
     ]].head(8)
     st.dataframe(muestra, use_container_width=True, hide_index=True, height=320)
-    st.caption("Mostramos 8 de 1.890 registros. La fuente original viene hasheada por privacidad.")
+    st.caption("Mostramos 8 de 1.890 registros. Los nombres y DNI originales vienen encriptados (hasheados) por privacidad.")
 
 with col_resumen:
     st.markdown("#### Resumen de columnas")
-    # Sacamos las columnas que creamos nosotros en la limpieza para no confundir
     cols_internas = {"PROV_NORM", "DEPTO_NORM", "UBIGEO_DIST", "UBIGEO_PROV_RAW", "UBIGEO_DEP_RAW", "TIPO_COLEGIO_NORM"}
     mapa_tipos = {"object": "texto", "int64": "entero", "float64": "decimal"}
     
@@ -132,7 +131,7 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown("#### Vista nacional")
     st.plotly_chart(mapa_nacional(agg_deptos, geo_deptos), use_container_width=True, config=PLOTLY_CONFIG)
-    st.caption("El 94.8% viene de Puno. El resto es goteo del sur.")
+    st.caption("El 94.8% es de Puno. El resto son casos aislados, en su mayoría de Cusco, Arequipa, Lima y Tacna.")
 
 with col2:
     st.markdown("#### Zoom a Puno")
@@ -141,15 +140,15 @@ with col2:
 
 st.markdown("")
 st.markdown("#### ¿Y los que vienen de fuera de Puno?")
-st.markdown("Son **98 ingresantes (5.2%)** en 12 departamentos. Analizamos si tenían un perfil distinto y no: el puntaje medio es casi idéntico (1908 vs 1913).")
+st.markdown("Son **98 ingresantes (5.2%)** distribuidos en 12 departamentos. Al comparar con los de Puno, no encontramos diferencias en el puntaje promedio (1908 vs 1913) ni en la modalidad de ingreso.")
 
 col_ext_graf, col_ext_datos = st.columns([2, 1])
 with col_ext_graf:
     st.plotly_chart(barras_externos(df), use_container_width=True, config=PLOTLY_CONFIG)
 with col_ext_datos:
-    st.markdown("##### Carreras más elegidas:")
-    st.markdown("- Turismo: 8\n- Ing. Mecánica Eléctrica: 5\n- Medicina Veterinaria: 5\n- Odontología: 5")
-    st.markdown("##### Modalidad:")
+    st.markdown("##### Carreras más elegidas (de las 98 personas):")
+    st.markdown("- Turismo: 8 ingresantes\n- Ing. Mecánica Eléctrica: 5\n- Medicina Veterinaria: 5\n- Odontología: 5")
+    st.markdown("##### Modalidad de ingreso:")
     st.markdown("- Examen General: 56\n- CEPREUNA: 30\n- Primeros Puestos: 6")
 
 st.caption(FUENTE_GRAFICOS)
@@ -160,7 +159,7 @@ section_header("02", TITULO_SECCION_2, SUBTITULO_SECCION_2)
 
 g1, g2, g3, g4 = st.columns(4)
 with g1:
-    metric_card("96 pts", "Brecha de género", hint="Diferencia entre carreras extremas")
+    metric_card("96 pts", "Brecha de género", hint="Entre la carrera con más y menos mujeres")
 with g2:
     metric_card("Ed. Inicial", "Más feminizada", hint="100% F", color=COLOR_FEMENINO)
 with g3:
