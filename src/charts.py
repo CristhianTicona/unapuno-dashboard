@@ -13,6 +13,7 @@ import plotly.graph_objects as go
 from src.constants import (
     COLOR_TERRITORIO,
     COLOR_HALLAZGO,
+    COLOR_SECUNDARIO,
     COLOR_FEMENINO,
     COLOR_MASCULINO,
     ESCALA_CALOR,
