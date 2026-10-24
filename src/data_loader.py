@@ -1,6 +1,5 @@
 """
 Carga de datos.
-
 Todas las rutas son relativas (Path(__file__)), así funciona igual en local,
 en GitHub y en Streamlit Cloud. No hay rutas de Colab.
 """
@@ -8,7 +7,6 @@ en GitHub y en Streamlit Cloud. No hay rutas de Colab.
 import unicodedata
 import pandas as pd
 import geopandas as gpd
-from functools import lru_cache
 
 from src.constants import (
     RUTA_INGRESANTES,
@@ -31,10 +29,8 @@ def normalizar_nombre(s):
     return " ".join(s.split())
 
 
-# Uso lru_cache en lugar de st.cache_data porque así los loaders sirven
-# también si se llaman desde un test o desde un notebook. La caché de
-# Streamlit va un nivel arriba, en app.py.
-@lru_cache(maxsize=1)
+# Sin decoradores de caché acá. El caché se maneja un nivel arriba, en app.py
+# con @st.cache_data. Tener ambos al mismo tiempo puede generar reruns.
 def cargar_ingresantes():
     df = pd.read_parquet(RUTA_INGRESANTES)
     if "PROV_NORM" not in df.columns:
@@ -44,22 +40,18 @@ def cargar_ingresantes():
     return df
 
 
-@lru_cache(maxsize=1)
 def cargar_agg_provincias():
     return pd.read_csv(RUTA_AGG_PROVINCIAS)
 
 
-@lru_cache(maxsize=1)
 def cargar_agg_departamentos():
     return pd.read_csv(RUTA_AGG_DEPARTAMENTOS)
 
 
-@lru_cache(maxsize=1)
 def cargar_geo_provincias():
     return gpd.read_file(RUTA_GEO_PROVINCIAS)
 
 
-@lru_cache(maxsize=1)
 def cargar_geo_departamentos():
     return gpd.read_file(RUTA_GEO_DEPARTAMENTOS)
 
