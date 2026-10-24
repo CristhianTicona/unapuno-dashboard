@@ -23,15 +23,52 @@ def _base(fig, **overrides):
         font=dict(family=FUENTE, size=12),
         margin=dict(l=10, r=10, t=20, b=10),
         hoverlabel=dict(font=dict(family=FUENTE, size=12)),
-        # Forzamos a que el fondo del mapa sea transparente
-        geo=dict(bgcolor="rgba(0,0,0,0)"),
     )
     layout.update(overrides)
     fig.update_layout(**layout)
     return fig
 
+def _base_mapa(fig, **overrides):
+    """
+    Configuración especial para los mapas.
+    Forzamos un fondo blanco (paper, plot y geo) porque en modo oscuro los
+    mapas se pierden en el fondo. Un recuadro blanco da el contraste justo
+    para que los colores de las provincias resalten.
+    """
+    layout = dict(
+        template="streamlit",
+        font=dict(family=FUENTE, size=12),
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
+        margin=dict(l=10, r=10, t=30, b=10),
+        hoverlabel=dict(font=dict(family=FUENTE, size=12)),
+        # Colorbar a la derecha, de tamaño razonable
+        coloraxis_colorbar=dict(
+            title="Ingresantes",
+            thickness=15,
+            len=0.6,
+            y=0.5,
+            yanchor="middle",
+            x=1.0,
+            xanchor="left",
+            tickfont=dict(size=11),
+        )
+    )
+    layout.update(overrides)
+    fig.update_layout(**layout)
+    
+    # Fondo del mapa geográfico
+    fig.update_geos(
+        fitbounds="locations", 
+        visible=False,
+        bgcolor="#FFFFFF",
+        landcolor="#F3F4F6", # Gris casi blanco para las provincias sin datos
+    )
+    return fig
+
 def mapa_nacional(agg_deptos, geo_deptos):
     df = agg_deptos.copy()
+    # Logaritmo para que Cusco (39) y Arequipa (20) se vean al lado de Puno (1795)
     df["n_log"] = np.log1p(df["n_ingresantes"])
 
     fig = px.choropleth(
@@ -44,14 +81,20 @@ def mapa_nacional(agg_deptos, geo_deptos):
         hover_data={"DEPARTAMEN": True, "n_ingresantes": True, "n_log": False},
         labels={"n_ingresantes": "Ingresantes", "DEPARTAMEN": "Departamento"},
     )
-    fig.update_geos(fitbounds="locations", visible=False)
 
-    # En el mapa nacional ocultamos la colorbar. Al usar logaritmo la escala no
-    # es lineal y confunde. El hover y el texto debajo dan el dato exacto.
-    return _base(
+    # Como usamos logaritmo, los números de la colorbar serían 0, 2, 4, 6...
+    # Los ocultamos y dejamos solo el título "Ingresantes". El valor real
+    # sale en el hover.
+    return _base_mapa(
         fig, 
-        height=550, 
-        coloraxis_showscale=False
+        height=520, 
+        coloraxis_colorbar=dict(
+            title="Ingresantes",
+            thickness=12,
+            len=0.5,
+            tickvals=[], 
+            ticktext=[],
+        )
     )
 
 def _centroides_puno(geo_provincias):
@@ -77,8 +120,8 @@ def mapa_puno(agg_provincias, geo_provincias):
             "puntaje_mediano": "Puntaje mediano",
         },
     )
-    fig.update_geos(fitbounds="locations", visible=False)
 
+    # Etiquetas. Al tener fondo blanco, las letras ahora son oscuras.
     cent = geo_provincias.copy()
     cent["cx"] = _centroides_puno(geo_provincias).x.values
     cent["cy"] = _centroides_puno(geo_provincias).y.values
@@ -88,25 +131,18 @@ def mapa_puno(agg_provincias, geo_provincias):
             x=row["cx"], y=row["cy"],
             text=f"<b>{row['PROV_NORM'].title()}</b><br>{int(row['n_ingresantes'])}",
             showarrow=False,
-            font=dict(size=10, color="white"),
-            bgcolor="rgba(0,0,0,0.5)",
-            borderpad=3,
+            font=dict(size=10, color="#1F2A30"), # Letra oscura
+            bgcolor="rgba(255,255,255,0.7)", # Fondo blanco semitransparente
+            borderpad=2,
         )
 
-    # Ponemos la colorbar en horizontal abajo del mapa, para que no se 
-    # descuadre hacia los costados.
-    return _base(
+    return _base_mapa(
         fig, 
-        height=550, 
+        height=520, 
         coloraxis_colorbar=dict(
-            title="",
-            orientation="h",
+            title="Ingresantes",
             thickness=12,
-            len=0.6,
-            y=-0.1,
-            x=0.5,
-            xanchor="center",
-            yanchor="top",
+            len=0.5,
         )
     )
 
@@ -287,7 +323,7 @@ def barras_brecha_escolar(agg_provincias):
             title="% Privado", 
             thickness=12, 
             len=0.5,
-            y=0.5, # Centrar verticalmente
+            y=0.5,
             yanchor="middle"
         ),
         xaxis=dict(gridcolor="rgba(128,128,128,0.2)", range=[1500, 2100]),
