@@ -29,10 +29,6 @@ def _base(fig, **overrides):
     return fig
 
 def _base_mapa(fig, **overrides):
-    """
-    Configuración para los mapas. Volvemos al fondo transparente para que
-    se integren con el modo oscuro/claro de la página.
-    """
     layout = dict(
         template="streamlit",
         font=dict(family=FUENTE, size=12),
@@ -40,7 +36,6 @@ def _base_mapa(fig, **overrides):
         plot_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=0, r=0, t=10, b=0),
         hoverlabel=dict(font=dict(family=FUENTE, size=12)),
-        # Colorbar a la derecha, un poco más alta para que no flote
         coloraxis_colorbar=dict(
             title="Ingresantes",
             thickness=10,
@@ -65,7 +60,6 @@ def _base_mapa(fig, **overrides):
 
 def mapa_nacional(agg_deptos, geo_deptos):
     df = agg_deptos.copy()
-    # Logaritmo para que Cusco (39) y Arequipa (20) se vean al lado de Puno (1795)
     df["n_log"] = np.log1p(df["n_ingresantes"])
 
     fig = px.choropleth(
@@ -79,8 +73,11 @@ def mapa_nacional(agg_deptos, geo_deptos):
         labels={"n_ingresantes": "Ingresantes", "DEPARTAMEN": "Departamento"},
     )
 
-    # Ocultamos los números de la colorbar porque al usar logaritmo (2, 4, 6)
-    # no se entienden. El valor real sale en el hover.
+    # Calculamos los ticks reales (0, 10, 100...) y los ubicamos 
+    # en la escala logarítmica para que la barra de la derecha muestre los números.
+    ticks_pos = [np.log1p(x) for x in [0, 10, 100, 500, 1000, 1800]]
+    ticks_lbl = ["0", "10", "100", "500", "1000", "1800"]
+
     return _base_mapa(
         fig, 
         height=500, 
@@ -88,8 +85,10 @@ def mapa_nacional(agg_deptos, geo_deptos):
             title="Ingresantes",
             thickness=10,
             len=0.7,
-            tickvals=[], 
-            ticktext=[],
+            tickvals=ticks_pos,
+            ticktext=ticks_lbl,
+            tickfont=dict(size=11, color="#888888"),
+            titlefont=dict(size=12, color="#888888"),
         )
     )
 
@@ -122,8 +121,6 @@ def mapa_puno(agg_provincias, geo_provincias):
     cent["cy"] = _centroides_puno(geo_provincias).y.values
     cent = cent.merge(agg_provincias[["PROV_NORM", "n_ingresantes"]], on="PROV_NORM")
     
-    # Letras blancas con fondo oscuro semitransparente para que se lean 
-    # tanto en modo claro como oscuro.
     for _, row in cent.iterrows():
         fig.add_annotation(
             x=row["cx"], y=row["cy"],
@@ -324,7 +321,9 @@ def barras_brecha_escolar(agg_provincias):
             thickness=12, 
             len=0.5,
             y=0.5,
-            yanchor="middle"
+            yanchor="middle",
+            tickfont=dict(size=11, color="#888888"),
+            titlefont=dict(size=12, color="#888888"),
         ),
         xaxis=dict(gridcolor="rgba(128,128,128,0.2)", range=[1500, 2100]),
         yaxis=dict(tickfont=dict(size=11)),
