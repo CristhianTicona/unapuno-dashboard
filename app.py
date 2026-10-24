@@ -1,5 +1,6 @@
 """
 Dashboard de ingresantes a la UNA Puno, proceso 2024-I.
+Trabajo de Visualización de Datos - Maestría en Ciencia de Datos (UNAP).
 """
 
 import streamlit as st
@@ -23,12 +24,12 @@ from src.styles import (
     divider, footer,
 )
 
-st.set_page_config(
-    page_title=TITULO_APP,
-    layout="wide",
-)
+# Configuración básica de la página
+st.set_page_config(page_title=TITULO_APP, layout="wide")
 aplicar_estilos()
 
+# Cargamos los datos. Streamlit ejecuta todo de nuevo en cada interacción, 
+# así que el @st.cache_data evita que se lea el parquet y el geojson de cero cada vez.
 @st.cache_data(show_spinner="Cargando datos...")
 def _cargar():
     return cargar_todo()
@@ -40,6 +41,7 @@ agg_deptos = datos["agg_departamentos"]
 geo_provincias = datos["geo_provincias"]
 geo_deptos = datos["geo_departamentos"]
 
+# --- Sidebar ---
 with st.sidebar:
     st.title("Sobre el dashboard")
     st.markdown(
@@ -48,18 +50,19 @@ with st.sidebar:
     )
     with st.expander("Fuente y licencia", expanded=True):
         st.markdown("""
-        - **Fuente:** Plataforma Nacional de Datos Abiertos
+        - **Datos:** Plataforma Nacional de Datos Abiertos
         - **Entidad:** Universidad Nacional del Altiplano
         - **Licencia:** Open Data Commons Attribution
         - **Periodo:** 2024-I
         """)
-    with st.expander("Decisiones de limpieza"):
+    with st.expander("Notas de limpieza"):
         st.markdown("""
-        - El UBIGEO original no seguía el estándar INEI. Puno aparecía con código `20` y las provincias estaban desalineadas. Cruzamos con el mapa por **nombre**, no por código.
-        - 1 caso de doble ingreso (mismo DNI). Conservamos el puntaje más alto.
-        - `TIPO_COLEGIO` venía en 5 variantes → lo agrupamos en 3.
+        - El UBIGEO original tenía errores. Puno aparecía con código `20` y las provincias estaban desalineadas. Lo arreglamos cruzando los datos con el mapa por **nombre**, no por código.
+        - Había 1 caso de doble ingreso (mismo DNI). Dejamos el puntaje más alto.
+        - `TIPO_COLEGIO` tenía 5 variantes distintas → las agrupamos en 3.
         """)
 
+# --- Portada ---
 hero(
     eyebrow=EYEBROW,
     titulo=TITULO_APP,
@@ -67,6 +70,7 @@ hero(
     idea_central=IDEA_CENTRAL,
 )
 
+# --- El dataset en números ---
 st.markdown("### El dataset en números")
 st.markdown(
     "Antes de la historia, los datos. Corte transversal del proceso 2024-I: "
@@ -86,6 +90,7 @@ with col_m4:
 
 st.markdown("")
 col_muestra, col_resumen = st.columns([3, 2])
+
 with col_muestra:
     st.markdown("#### Algunas filas (identificadores hasheados)")
     muestra = df[[
@@ -93,12 +98,14 @@ with col_muestra:
         "ESCUELA_PROFESIONAL", "TIPO_COLEGIO_NORM", "PUNTAJE",
     ]].head(8)
     st.dataframe(muestra, use_container_width=True, hide_index=True, height=320)
-    st.caption("Mostramos 8 de 1.890 registros. La fuente original viene hasheada.")
+    st.caption("Mostramos 8 de 1.890 registros. La fuente original viene hasheada por privacidad.")
 
 with col_resumen:
     st.markdown("#### Resumen de columnas")
+    # Sacamos las columnas que creamos nosotros en la limpieza para no confundir
     cols_internas = {"PROV_NORM", "DEPTO_NORM", "UBIGEO_DIST", "UBIGEO_PROV_RAW", "UBIGEO_DEP_RAW", "TIPO_COLEGIO_NORM"}
     mapa_tipos = {"object": "texto", "int64": "entero", "float64": "decimal"}
+    
     metadatos = []
     for col in df.columns:
         if col in cols_internas: continue
@@ -117,7 +124,7 @@ with col_donut:
 st.caption(FUENTE_GRAFICOS)
 divider()
 
-# --- Sección 01 ---
+# --- Sección 01: Territorio ---
 section_header("01", TITULO_SECCION_1, SUBTITULO_SECCION_1)
 
 col1, col2 = st.columns(2)
@@ -133,7 +140,7 @@ with col2:
 
 st.markdown("")
 st.markdown("#### ¿Y los que vienen de fuera de Puno?")
-st.markdown("Son **98 ingresantes (5.2%)** en 12 departamentos. Analizamos si tenían perfil propio y no: el puntaje medio es casi idéntico (1908 vs 1913).")
+st.markdown("Son **98 ingresantes (5.2%)** en 12 departamentos. Analizamos si tenían un perfil distinto y no: el puntaje medio es casi idéntico (1908 vs 1913).")
 
 col_ext_graf, col_ext_datos = st.columns([2, 1])
 with col_ext_graf:
@@ -147,7 +154,7 @@ with col_ext_datos:
 st.caption(FUENTE_GRAFICOS)
 divider()
 
-# --- Sección 02 ---
+# --- Sección 02: Género ---
 section_header("02", TITULO_SECCION_2, SUBTITULO_SECCION_2)
 
 g1, g2, g3, g4 = st.columns(4)
@@ -166,7 +173,7 @@ st.caption("Cada barra va del eje central hacia el porcentaje correspondiente. L
 st.caption(FUENTE_GRAFICOS)
 divider()
 
-# --- Sección 03 ---
+# --- Sección 03: Brechas ---
 section_header("03", TITULO_SECCION_3, SUBTITULO_SECCION_3)
 
 st.plotly_chart(barras_brecha_escolar(agg_provincias), use_container_width=True, config=PLOTLY_CONFIG)
@@ -187,15 +194,15 @@ divider()
 st.markdown("### Cierre")
 st.markdown(f"> {CIERRE}")
 
-st.markdown("**Limitaciones:**")
+st.markdown("**Limitaciones del análisis:**")
 st.markdown("""
-- Corte transversal (solo 2024-I). No podemos hablar de tendencias.
-- Solo tenemos ingresantes. No hay tasa de admisión.
-- Provincias con muestra chica (Moho n=23) tienen promedios volátiles.
+- Es un corte transversal (solo 2024-I). No podemos analizar tendencias.
+- Solo tenemos datos de los que ingresaron. No sabemos cuántos postularon y no entraron.
+- Provincias con muestra chica (Moho n=23) tienen promedios que pueden variar mucho.
 - El UBIGEO del dataset no respeta el estándar INEI. Lo resolvimos por nombre.
 """)
 
 footer(
-    "<strong>Visualización de Datos</strong> · [Universidad] · Octubre 2026<br>"
-    "Sección 01: [Nombre 1] · Sección 02: [Nombre 2] · Sección 03: [Nombre 3]"
+    "<strong>Visualización de Datos</strong> · Maestría en Ciencia de Datos · UNAP · 2026<br>"
+    "Cristhian Ticona Cutipa · Russell Carbajal Vilca · Jean Carlos Carrasco Cutisaca"
 )
