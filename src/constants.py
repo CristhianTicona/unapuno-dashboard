@@ -53,8 +53,8 @@ SUBTITULO_SECCION_1 = (
 TITULO_SECCION_2 = "¿Cómo se reparten?"
 SUBTITULO_SECCION_2 = (
     "En el total, la proporción es casi paritaria: 55% hombres y 45% mujeres. "
-    "Pero al mirar por carrera, la diferencia es total: desde 100% de mujeres "
-    "en Educación Inicial hasta 4% en Ingeniería Mecánica Eléctrica."
+    "Pero al mirar por carrera, la diferencia es total: Educación Inicial tiene "
+    "100% de mujeres e Ingeniería Mecánica Eléctrica solo 4%. Es una brecha de 96 puntos porcentuales."
 )
 
 TITULO_SECCION_3 = "¿Qué explica las brechas?"
