@@ -41,6 +41,16 @@ def mapa_nacional(agg_deptos, geo_deptos):
     return fig
 
 
+def _centroides_puno(geo_provincias):
+    # Puno cae en la zona UTM 19S (69-71°O). Si calculamos centroides en
+    # lat/lon, geopandas avisa (con razón) que los grados no son una unidad
+    # de longitud constante. En UTM son metros, así que el cálculo es correcto.
+    # Después volvemos a WGS84 porque Plotly dibuja en lat/lon.
+    en_utm = geo_provincias.to_crs(32719)
+    cent = en_utm.geometry.centroid.to_crs(4326)
+    return cent
+
+
 def mapa_puno(agg_provincias, geo_provincias):
     fig = px.choropleth(
         agg_provincias,
@@ -65,8 +75,8 @@ def mapa_puno(agg_provincias, geo_provincias):
     # Etiquetas en el centroide. Sin esto hay que pasar el mouse por cada
     # provincia para saber cuál es cuál, y en la expo eso no funciona.
     cent = geo_provincias.copy()
-    cent["cx"] = cent.geometry.centroid.x
-    cent["cy"] = cent.geometry.centroid.y
+    cent["cx"] = _centroides_puno(geo_provincias).x.values
+    cent["cy"] = _centroides_puno(geo_provincias).y.values
     cent = cent.merge(agg_provincias[["PROV_NORM", "n_ingresantes"]], on="PROV_NORM")
     for _, row in cent.iterrows():
         fig.add_annotation(
@@ -88,11 +98,7 @@ def barras_externos(df):
     # Los 98 que no son de Puno. Son pocos pero pesan narrativamente porque
     # muestran hasta dónde llega la universidad.
     externos = df[df["DEPTO_NORM"] != "PUNO"]
-    conteo = (
-        externos["DEPARTAMENTO_PROCEDENCIA"]
-        .value_counts()
-        .reset_index()
-    )
+    conteo = externos["DEPARTAMENTO_PROCEDENCIA"].value_counts().reset_index()
     conteo.columns = ["depto", "n"]
     conteo = conteo.sort_values("n", ascending=True)
 
