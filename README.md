@@ -1,98 +1,69 @@
 # Ingresantes UNA Puno 2024-I
 
-Dashboard narrativo de los 1.890 ingresantes a la Universidad Nacional del
-Altiplano en el proceso 2024-I. Trabajo del curso de Visualización de Datos,
-hecho en Streamlit.
+Análisis y visualización de los ingresantes a la Universidad Nacional del Altiplano (UNAP) en el proceso de admisión 2024-I.
 
-**Dashboard:** [URL Streamlit Cloud]
-**Dataset original:** [URL portal de transparencia UNAP]
-**Shapefile:** INEI 2023, adaptado por geogpsperu
+- **Dashboard:** [https://unapuno-dashboard.streamlit.app/](https://unapuno-dashboard.streamlit.app/)
+- **Repositorio:** [https://github.com/CristhianTicona/unapuno-dashboard.git](https://github.com/CristhianTicona/unapuno-dashboard.git)
 
-## La historia, en 3 secciones
+## Información académica
 
-Cada sección arranca con una pregunta y la responde con un gráfico.
+- **Curso:** Visualización de Datos
+- **Programa:** Maestría en Ciencia de Datos
+- **Universidad:** Universidad Nacional del Altiplano - Puno
 
-**01 · ¿De dónde vienen?** La UNA Puno es casi exclusivamente puntana (94.8%),
-pero al mirar las 13 provincias, la capital aporta solo el 30%; el 51% restante
-viene de las otras 11. No es una universidad de la ciudad, es de la región.
-Los 98 ingresantes de fuera de Puno se analizan aparte: no tienen perfil propio,
-son goteo regional.
+**Integrantes:**
+- Cristhian Eddy Ticona Cutipa
+- Russell Eulogio Carbajal Vilca
+- Jean Carlos Carrasco Cutisaca
 
-**02 · ¿Cómo se reparten?** En el agregado 55% masculino / 45% femenino, casi
-paritario. Por carrera el rango es de 96 puntos: Educación Inicial 100%
-femenina, Ing. Mecánica Eléctrica 4% femenina. La segregación vocacional es
-total.
+## El análisis
 
-**03 · ¿Qué explica las brechas?** El % de colegios privados por provincia
-correlaciona con el puntaje mediano, pero con excepciones fuertes (Yunguyo,
-Moho). El origen escolar importa, no determina.
+El dashboard se divide en tres partes, cada una respondiendo una pregunta específica sobre los 1.890 ingresantes:
 
-## Dataset
+1. **¿De dónde vienen?** La mayoría (94.8%) es de Puno, pero al mirar las 13 provincias, la capital aporta solo el 30%. El 51% restante viene de las otras 11 provincias, demostrando que no es una universidad centralizada en la ciudad, sino regional. También incluimos un gráfico de los 98 ingresantes que vienen de fuera de Puno para ver su comportamiento.
+2. **¿Cómo se reparten?** En general, la proporción es casi paritaria (55% hombres, 45% mujeres). Sin embargo, al mirar por carrera, la brecha es enorme: Educación Inicial tiene 100% de mujeres y en Ingeniería Mecánica Eléctrica solo hay 4%.
+3. **¿Qué explica las brechas?** Al cruzar el porcentaje de colegios privados de cada provincia con el puntaje mediano de ingreso, vemos que no hay una regla fija. Provincias como Yunguyo (casi sin colegios privados) tienen los mejores puntajes, mientras que Moho tiene un buen puntaje pero una muestra muy pequeña (23 ingresantes). El origen escolar importa, pero no determina el resultado.
 
-- 1.890 registros después de limpieza
-- 25 columnas: demográficas, geográficas, académicas
-- Proceso 2024-I (corte transversal, sin serie temporal)
-- Licencia: Open Data Commons Attribution
-- Ley N° 27806 (Transparencia y Acceso a la Información Pública)
+## Fuentes de datos
 
-Variables usadas: `SEXO`, `DEPARTAMENTO_PROCEDENCIA`, `PROVINCIA_PROCEDENCIA`,
-`ESCUELA_PROFESIONAL`, `TIPO_COLEGIO`, `PUNTAJE`.
+- **Dataset:** [Plataforma Nacional de Datos Abiertos - Lista de Ingresantes UNAP 2024-I](https://www.datosabiertos.gob.pe/dataset/lista-de-ingresantes-durante-el-a%C3%B1o-2024-i-la-universidad-nacional-del-altiplano-una-puno)
+- **Licencia:** Open Data Commons Attribution
+- **Shapefile:** [Límite provincial político - geogpsperu](https://www.geogpsperu.com/2019/08/limite-provincial-politico-shapefile.html) (basado en INEI 2023). *Nota: el shapefile original fue recortado y convertido a GeoJSON para el uso en este proyecto.*
+- **Marco legal:** Ley N° 27806 (Transparencia y Acceso a la Información Pública).
 
-## Lo que nos encontramos limpiando
+## Limpieza y problemas encontrados
 
-**El UBIGEO no sigue el estándar INEI.** El dataset usa el código `20` para
-Puno (debería ser `21`) y las provincias están corridas desde la 2105: "Moho"
-aparece con código de "San Román", por ejemplo. Resolvimos cruzando con el
-shapefile por **nombre normalizado** (mayúsculas, sin tildes), no por código.
-Verificamos que las 13 provincias de Puno coinciden.
+Tuvimos que hacer varios ajustes al dataset original antes de poder graficarlo:
 
-**Un caso de doble ingreso.** El mismo DNI (z4843339) aparece dos veces porque
-postuló por CEPREUNA (2306.01) y por Examen General (2572.05). Nos quedamos con
-el puntaje más alto para no inflar el conteo territorial.
+- **El UBIGEO estaba mal.** El dataset no usa el estándar INEI. Puno aparecía con el código `20` en lugar de `21`, y las provincias estaban desalineadas desde el código 2105 (por ejemplo, "Moho" aparecía con el código de "San Román"). Lo solucionamos cruzando el dataset con el shapefile usando los nombres normalizados (sin tildes, en mayúsculas) en lugar de los códigos.
+- **1 caso de doble ingreso.** El mismo DNI aparecía dos veces porque la persona ingresó por CEPREUNA y por Examen General. Nos quedamos con el registro de mayor puntaje para no duplicar los conteos territoriales.
+- **`TIPO_COLEGIO` tenía 5 variantes.** Había errores de tipeo y categorías mezcladas. Lo simplificamos en 3: Pública, Privada, y Pública de Gestión Privada (un caso real de colegios administrados por privados).
+- **Un año de egreso imposible.** Un registro decía que el alumno egresó en 2029, siendo que el examen fue en 2024. Lo dejamos en el dataset pero lo excluimos de los análisis de tiempo y lo anotamos como limitación.
+- **Escalas de puntaje.** Verificamos que los puntajes de General, CEPREUNA y Extraordinario son comparables (la diferencia entre sus rangos es mínima), así que pudimos usar todo el dataset junto.
 
-**TIPO_COLEGIO venía en 5 variantes.** "PÚBLICA DE GESTIÓN DIRECTA",
-"PUBLICA DE GESTION DIRECTA", "PRIVADA", "PRIVADO", "PÚBLICA DE GESTIÓN
-PRIVADA". Lo dejamos en 3 categorías. La tercera es un caso real (colegios
-públicos administrados por privados, tipo Fe y Alegría), así que la mantuvimos
-aparte.
+### Nota sobre los ingresantes externos
 
-**Un año de egreso imposible.** Un registro dice que egresó en 2029 pero el
-examen es 2024. Queda en el dataset pero lo anotamos como limitación y lo
-excluimos del análisis de gap educativo.
+Hay 98 ingresantes (5.2%) que vienen de otros departamentos (Cusco, Arequipa, Lima, Tacna, etc.). Analizamos sus datos y no tienen un perfil distinto: su puntaje promedio es casi igual al de los puneños (1908 vs 1913) y se reparten entre 34 carreras. Por eso no les dedicamos una sección completa, sino que quedan como un gráfico informativo dentro de la primera sección.
 
-**Las 3 escalas de puntaje son comparables.** Ratio 1.20x entre el rango mayor
-y el menor (General, CEPREUNA, Extraordinario). Se pueden usar juntos sin
-filtrar.
+## Paleta de colores
 
-**Solo hay un periodo.** El dataset cubre 2024-I. No podemos analizar
-tendencias.
+Para mantener la consistencia visual y comunicativa, definimos una paleta basada en 5 colores sólidos y 2 escalas de degradado:
 
-## Por qué no hicimos una sección sobre "externos"
+| Color | Hex | Uso en el dashboard | Criterio |
+| :--- | :--- | :--- | :--- |
+| Azul petróleo | `#1C4E5C` | Mapas, gráfico de barras de externos, porción GENERAL de la dona. | Seriedad institucional; evoca al Lago Titicaca. |
+| Naranja quemado | `#D97B29` | Porción CEPREUNA de la dona, resaltado de casos atípicos (Moho, Yunguyo), y % privado alto. | Contraste fuerte para atraer la vista al dato clave o al hallazgo. |
+| Verde andino | `#6A8A3A` | Porción EXTRAORDINARIO de la dona. | Diferenciar la tercera categoría sin competir con el naranja. |
+| Azul acero | `#2E5C8A` | Barras de hombres (Sección 02) y tarjeta de "Ing. Mecánica Eléctrica". | Diferenciar la categoría masculina de forma limpia. |
+| Magenta apagado | `#C6517C` | Barras de mujeres (Sección 02) y tarjeta de "Ed. Inicial". | Diferenciar la categoría femenina sin usar rosa pastel (poco legible). |
 
-Hay 98 ingresantes (5.2%) de fuera de Puno: Cusco 39, Arequipa 20, Lima 14,
-Tacna 11, y 8 departamentos más con 1-3 casos. Analizamos si tenían perfil
-propio y no: puntaje medio casi idéntico (1908 vs 1913), gap educativo también
-(3.8 vs 3.4 años), y se reparten en 34 carreras sin concentración. Quedan como
-gráfico secundario en la sección 01 pero no alcanzan para un análisis propio.
+**Escalas continuas:**
+Para los mapas y el gráfico de puntajes usamos gradientes que van desde tonos grises/azules claros (para los valores más bajos) hasta el azul petróleo o el naranja quemado (para los valores más altos). Esto permite leer rápidamente dónde están las concentraciones y las brechas sin necesidad de una leyenda compleja.
 
-## Paleta
+**La regla principal:** El naranja se reserva exclusivamente para destacar hallazgos (como Yunguyo y Moho en la Sección 03). Si lo usáramos en todos los gráficos, dejaría de llamar la atención.
 
-| Color | Hex | Uso |
-|---|---|---|
-| Azul petróleo | `#1C4E5C` | Territorio, mapas |
-| Naranja quemado | `#D97B29` | Hallazgos (Yunguyo, Moho) |
-| Gris arena | `#D9D2C5` | Fondo, neutro |
-| Verde andino | `#6A8A3A` | Categorías secundarias |
+## Estructura del proyecto
 
-El naranja solo aparece en los puntos que queremos destacar. Si lo usamos en
-todos lados, deja de destacar.
-
-## Cómo correrlo
-
-```bash
-git clone https://github.com/[usuario]/unapuno-dashboard.git
-cd unapuno-dashboard
-python -m venv venv
-source venv/bin/activate    # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-streamlit run app.py
+- `app.py`: código principal de Streamlit.
+- `src/`: módulos auxiliares (carga de datos, gráficos y estilos).
+- `data/`: archivos `.parquet`, `.csv` y `.geojson` con los datos ya procesados.
