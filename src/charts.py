@@ -2,6 +2,7 @@
 Funciones de gráficos.
 """
 
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -14,8 +15,6 @@ from src.constants import (
     ESCALA_CALOR,
 )
 
-# Usamos el template nativo de Streamlit. Esto hace que los fondos y las letras
-# se adapten solos si el usuario tiene la página en modo claro u oscuro.
 FUENTE = "Source Sans Pro, -apple-system, sans-serif"
 
 def _base(fig, **overrides):
@@ -39,27 +38,33 @@ _COLORBAR = dict(
 )
 
 def mapa_nacional(agg_deptos, geo_deptos):
+    # Hacemos una copia para no modificar el original
+    df = agg_deptos.copy()
+    # Aplicamos log1p. Con 1795 en Puno y 39 en Cusco, la escala lineal hacía 
+    # que Cusco sea invisible. Con log, Cusco se ve (log(39) ~ 3.6) y Puno 
+    # sigue marcando la diferencia (log(1795) ~ 7.5).
+    df["n_log"] = np.log1p(df["n_ingresantes"])
+
     fig = px.choropleth(
-        agg_deptos,
+        df,
         geojson=geo_deptos.__geo_interface__,
         locations="DEPARTAMEN",
         featureidkey="properties.DEPARTAMEN",
-        color="n_ingresantes",
+        color="n_log",
         color_continuous_scale=ESCALA_CALOR,
-        hover_data={"DEPARTAMEN": True, "n_ingresantes": True},
+        hover_data={"DEPARTAMEN": True, "n_ingresantes": True, "n_log": False},
         labels={"n_ingresantes": "Ingresantes", "DEPARTAMEN": "Departamento"},
     )
     fig.update_geos(fitbounds="locations", visible=False)
-    
-    # Añadimos etiquetas para los departamentos que tienen ingresantes.
-    # Así no dependemos solo del hover.
-    for _, row in agg_deptos[agg_deptos["n_ingresantes"] > 0].iterrows():
-        # Buscamos el centro aproximado en el geojson (Plotly lo maneja internamente)
-        # Al no tener centroides a mano en el dict, simplemente dejamos que se vean
-        # al hacer hover, excepto Puno que es el más grande.
-        pass
 
-    return _base(fig, height=500, coloraxis_colorbar=_COLORBAR)
+    return _base(
+        fig, 
+        height=550, 
+        coloraxis_colorbar=_COLORBAR,
+        # Ocultamos los ticks del logaritmo para que no confunda, ya que 
+        # el hover muestra el número real.
+        coloraxis_colorbar_tickvals=[], 
+    )
 
 def _centroides_puno(geo_provincias):
     en_utm = geo_provincias.to_crs(32719)
@@ -95,9 +100,9 @@ def mapa_puno(agg_provincias, geo_provincias):
             x=row["cx"], y=row["cy"],
             text=f"<b>{row['PROV_NORM'].title()}</b><br>{int(row['n_ingresantes'])}",
             showarrow=False,
-            font=dict(size=10, color="white"), # Forzamos blanco para que contraste con el azul
-            bgcolor="rgba(0,0,0,0.3)",
-            borderpad=2,
+            font=dict(size=10, color="white"),
+            bgcolor="rgba(0,0,0,0.4)",
+            borderpad=3,
         )
 
     return _base(fig, height=550, coloraxis_colorbar=_COLORBAR)
@@ -108,13 +113,13 @@ def barras_externos(df):
     conteo.columns = ["depto", "n"]
     conteo = conteo.sort_values("n", ascending=True)
 
+    # Usamos un color sólido. El gradiente se perdía con valores bajos (3, 1).
     fig = px.bar(
         conteo,
         x="n", y="depto",
         orientation="h",
         text="n",
-        color="n",
-        color_continuous_scale=[[0, COLOR_TERRITORIO], [1, COLOR_HALLAZGO]],
+        color_discrete_sequence=[COLOR_TERRITORIO],
         labels={"n": "Ingresantes", "depto": ""},
     )
     fig.update_traces(
@@ -124,7 +129,6 @@ def barras_externos(df):
     return _base(
         fig,
         height=380,
-        coloraxis_showscale=False,
         xaxis=dict(gridcolor="rgba(128,128,128,0.2)", range=[0, conteo["n"].max() * 1.18]),
         yaxis=dict(tickfont=dict(size=11)),
     )
@@ -149,7 +153,6 @@ def donut_proceso(df):
         marker=dict(line=dict(color="rgba(0,0,0,0.2)", width=2)),
         hovertemplate="<b>%{label}</b><br>%{value} ingresantes (%{percent})<extra></extra>"
     )
-    # Texto al centro del donut
     fig.add_annotation(
         text=f"<b>{total:,}</b><br><span style='font-size:12px;'>ingresantes</span>",
         x=0.5, y=0.5, showarrow=False,
@@ -212,7 +215,7 @@ def barras_genero_carrera(df):
     )
 
 def _acortar_carrera(nombre):
-    # Mismo diccionario de antes...
+    # (Mismo diccionario de antes)
     reemplazos = {
         "EDUCACIÓN SECUNDARIA DE LA ESPECIALIDAD DE MATEMÁTICA, FÍSICA, COMPUTACIÓN E INFORMÁTICA": "Ed. Sec. Matemática/Física",
         "EDUCACIÓN SECUNDARIA DE LA ESPECIALIDAD DE CIENCIAS SOCIALES": "Ed. Sec. Ciencias Sociales",
@@ -254,11 +257,6 @@ def _acortar_carrera(nombre):
     return reemplazos.get(nombre, nombre.title())
 
 def barras_brecha_escolar(agg_provincias):
-    """
-    Reemplaza el gráfico de burbujas. Usamos barras horizontales porque
-    es muchísimo más fácil comparar el puntaje (largo de la barra) y ver
-    el % de colegios privados (color) al mismo tiempo.
-    """
     agg = agg_provincias.sort_values("puntaje_mediano", ascending=True).copy()
 
     fig = px.bar(
@@ -267,7 +265,9 @@ def barras_brecha_escolar(agg_provincias):
         y="PROV_NORM",
         orientation="h",
         color="pct_privado",
-        color_continuous_scale=[[0, "rgba(28, 78, 92, 0.2)"], [1, COLOR_HALLAZGO]],
+        # Cambiamos la escala. Ahora el mínimo es un azul claro pero visible 
+        # (no transparente) y el máximo es naranja.
+        color_continuous_scale=[[0, "#60A5FA"], [1, COLOR_HALLAZGO]],
         text="puntaje_mediano",
         hover_data={"n_ingresantes": True, "pct_privado": ":.1f"},
         labels={
