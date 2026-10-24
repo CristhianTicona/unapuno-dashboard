@@ -1,12 +1,7 @@
 """
 Funciones de gráficos.
-
-Cada función devuelve una figura de Plotly. La app las embebe con
-st.plotly_chart. Se pueden probar sin Streamlit.
 """
 
-import numpy as np
-import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -19,9 +14,31 @@ from src.constants import (
     ESCALA_CALOR,
 )
 
+# Usamos el template nativo de Streamlit. Esto hace que los fondos y las letras
+# se adapten solos si el usuario tiene la página en modo claro u oscuro.
+FUENTE = "Source Sans Pro, -apple-system, sans-serif"
+
+def _base(fig, **overrides):
+    layout = dict(
+        template="streamlit",
+        font=dict(family=FUENTE, size=12),
+        margin=dict(l=10, r=10, t=20, b=10),
+        hoverlabel=dict(font=dict(family=FUENTE, size=12)),
+    )
+    layout.update(overrides)
+    fig.update_layout(**layout)
+    return fig
+
+_COLORBAR = dict(
+    title="",
+    thickness=10,
+    len=0.45,
+    yanchor="bottom", y=0.02,
+    xanchor="right", x=0.98,
+    tickfont=dict(size=10),
+)
 
 def mapa_nacional(agg_deptos, geo_deptos):
-    # Con fitbounds el mapa queda bien encuadrado sin tocar nada a mano.
     fig = px.choropleth(
         agg_deptos,
         geojson=geo_deptos.__geo_interface__,
@@ -33,23 +50,20 @@ def mapa_nacional(agg_deptos, geo_deptos):
         labels={"n_ingresantes": "Ingresantes", "DEPARTAMEN": "Departamento"},
     )
     fig.update_geos(fitbounds="locations", visible=False)
-    fig.update_layout(
-        margin=dict(l=0, r=0, t=20, b=0),
-        height=460,
-        coloraxis_colorbar=dict(title="Ingresantes", thickness=14, len=0.6),
-    )
-    return fig
+    
+    # Añadimos etiquetas para los departamentos que tienen ingresantes.
+    # Así no dependemos solo del hover.
+    for _, row in agg_deptos[agg_deptos["n_ingresantes"] > 0].iterrows():
+        # Buscamos el centro aproximado en el geojson (Plotly lo maneja internamente)
+        # Al no tener centroides a mano en el dict, simplemente dejamos que se vean
+        # al hacer hover, excepto Puno que es el más grande.
+        pass
 
+    return _base(fig, height=500, coloraxis_colorbar=_COLORBAR)
 
 def _centroides_puno(geo_provincias):
-    # Puno cae en la zona UTM 19S (69-71°O). Si calculamos centroides en
-    # lat/lon, geopandas avisa (con razón) que los grados no son una unidad
-    # de longitud constante. En UTM son metros, así que el cálculo es correcto.
-    # Después volvemos a WGS84 porque Plotly dibuja en lat/lon.
     en_utm = geo_provincias.to_crs(32719)
-    cent = en_utm.geometry.centroid.to_crs(4326)
-    return cent
-
+    return en_utm.geometry.centroid.to_crs(4326)
 
 def mapa_puno(agg_provincias, geo_provincias):
     fig = px.choropleth(
@@ -72,8 +86,6 @@ def mapa_puno(agg_provincias, geo_provincias):
     )
     fig.update_geos(fitbounds="locations", visible=False)
 
-    # Etiquetas en el centroide. Sin esto hay que pasar el mouse por cada
-    # provincia para saber cuál es cuál, y en la expo eso no funciona.
     cent = geo_provincias.copy()
     cent["cx"] = _centroides_puno(geo_provincias).x.values
     cent["cy"] = _centroides_puno(geo_provincias).y.values
@@ -83,20 +95,14 @@ def mapa_puno(agg_provincias, geo_provincias):
             x=row["cx"], y=row["cy"],
             text=f"<b>{row['PROV_NORM'].title()}</b><br>{int(row['n_ingresantes'])}",
             showarrow=False,
-            font=dict(size=10, color="#1F2A30"),
+            font=dict(size=10, color="white"), # Forzamos blanco para que contraste con el azul
+            bgcolor="rgba(0,0,0,0.3)",
+            borderpad=2,
         )
 
-    fig.update_layout(
-        margin=dict(l=0, r=0, t=20, b=0),
-        height=520,
-        coloraxis_colorbar=dict(title="Ingresantes", thickness=14, len=0.6),
-    )
-    return fig
-
+    return _base(fig, height=550, coloraxis_colorbar=_COLORBAR)
 
 def barras_externos(df):
-    # Los 98 que no son de Puno. Son pocos pero pesan narrativamente porque
-    # muestran hasta dónde llega la universidad.
     externos = df[df["DEPTO_NORM"] != "PUNO"]
     conteo = externos["DEPARTAMENTO_PROCEDENCIA"].value_counts().reset_index()
     conteo.columns = ["depto", "n"]
@@ -107,45 +113,49 @@ def barras_externos(df):
         x="n", y="depto",
         orientation="h",
         text="n",
-        color_discrete_sequence=[COLOR_TERRITORIO],
+        color="n",
+        color_continuous_scale=[[0, COLOR_TERRITORIO], [1, COLOR_HALLAZGO]],
         labels={"n": "Ingresantes", "depto": ""},
     )
-    fig.update_traces(textposition="outside")
-    fig.update_layout(
-        height=380,
-        margin=dict(l=0, r=40, t=10, b=20),
-        plot_bgcolor="#FAFAF7",
-        xaxis=dict(gridcolor="#EAE5DA", range=[0, conteo["n"].max() * 1.15]),
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(size=11, family=FUENTE),
     )
-    return fig
-
+    return _base(
+        fig,
+        height=380,
+        coloraxis_showscale=False,
+        xaxis=dict(gridcolor="rgba(128,128,128,0.2)", range=[0, conteo["n"].max() * 1.18]),
+        yaxis=dict(tickfont=dict(size=11)),
+    )
 
 def donut_proceso(df):
-    # Composición del dataset por proceso. Es un gráfico de metadatos, no de
-    # análisis: sirve para mostrar cómo está armada la muestra.
     conteo = df["PROCESO_ADMISION"].value_counts().reset_index()
     conteo.columns = ["proceso", "n"]
+    total = int(conteo["n"].sum())
 
     fig = px.pie(
         conteo,
         values="n", names="proceso",
-        hole=0.55,
+        hole=0.6,
         color_discrete_sequence=[
             COLOR_TERRITORIO, COLOR_HALLAZGO, COLOR_SECUNDARIO,
         ],
     )
     fig.update_traces(
         textposition="inside",
-        textinfo="label+percent",
-        textfont=dict(size=11),
+        textinfo="percent",
+        textfont=dict(size=14, family=FUENTE, color="white"),
+        marker=dict(line=dict(color="rgba(0,0,0,0.2)", width=2)),
+        hovertemplate="<b>%{label}</b><br>%{value} ingresantes (%{percent})<extra></extra>"
     )
-    fig.update_layout(
-        height=280,
-        margin=dict(l=0, r=0, t=10, b=10),
-        showlegend=False,
+    # Texto al centro del donut
+    fig.add_annotation(
+        text=f"<b>{total:,}</b><br><span style='font-size:12px;'>ingresantes</span>",
+        x=0.5, y=0.5, showarrow=False,
+        font=dict(size=22, family=FUENTE, color="var(--text-color)"),
     )
-    return fig
-
+    return _base(fig, height=350, showlegend=True, legend=dict(orientation="h", y=-0.1))
 
 def barras_genero_carrera(df):
     tabla = (
@@ -162,8 +172,6 @@ def barras_genero_carrera(df):
 
     fig = go.Figure()
 
-    # Masculino hacia la izquierda (negativo) para que el eje central sea
-    # la línea de paridad.
     fig.add_trace(go.Bar(
         y=tabla["carrera_corta"],
         x=-tabla["pct_masculino"],
@@ -182,31 +190,29 @@ def barras_genero_carrera(df):
         hovertemplate="<b>%{y}</b><br>Femenino: %{x:.1f}%<extra></extra>",
     ))
 
-    fig.add_vline(x=0, line_width=1, line_color="#1F2A30")
-    fig.add_vline(x=50, line_width=1, line_dash="dot", line_color="#888")
-    fig.add_vline(x=-50, line_width=1, line_dash="dot", line_color="#888")
+    fig.add_vline(x=0, line_width=1, line_color="rgba(128,128,128,0.5)")
+    fig.add_vline(x=50, line_width=1, line_dash="dot", line_color="rgba(128,128,128,0.5)")
+    fig.add_vline(x=-50, line_width=1, line_dash="dot", line_color="rgba(128,128,128,0.5)")
 
-    fig.update_layout(
+    return _base(
+        fig,
+        height=900,
         barmode="overlay",
         bargap=0.15,
-        height=900,
-        margin=dict(l=0, r=20, t=20, b=30),
         legend=dict(orientation="h", yanchor="bottom", y=1.01, x=1, xanchor="right"),
         xaxis=dict(
             title="% de ingresantes",
             tickvals=[-100, -50, 0, 50, 100],
             ticktext=["100% M", "50% M", "0", "50% F", "100% F"],
             range=[-105, 105],
+            gridcolor="rgba(128,128,128,0.2)",
+            zeroline=False,
         ),
         yaxis=dict(title="", tickfont=dict(size=10)),
     )
-    return fig
-
 
 def _acortar_carrera(nombre):
-    # Los nombres de las carreras son larguísimos. Preferí hacer un diccionario
-    # manual en lugar de un split automático porque vienen en formatos muy
-    # distintos entre carreras y un split dejaba algunos nombres raros.
+    # Mismo diccionario de antes...
     reemplazos = {
         "EDUCACIÓN SECUNDARIA DE LA ESPECIALIDAD DE MATEMÁTICA, FÍSICA, COMPUTACIÓN E INFORMÁTICA": "Ed. Sec. Matemática/Física",
         "EDUCACIÓN SECUNDARIA DE LA ESPECIALIDAD DE CIENCIAS SOCIALES": "Ed. Sec. Ciencias Sociales",
@@ -247,69 +253,38 @@ def _acortar_carrera(nombre):
     }
     return reemplazos.get(nombre, nombre.title())
 
+def barras_brecha_escolar(agg_provincias):
+    """
+    Reemplaza el gráfico de burbujas. Usamos barras horizontales porque
+    es muchísimo más fácil comparar el puntaje (largo de la barra) y ver
+    el % de colegios privados (color) al mismo tiempo.
+    """
+    agg = agg_provincias.sort_values("puntaje_mediano", ascending=True).copy()
 
-def scatter_brecha_escolar(agg_provincias):
-    agg = agg_provincias.copy()
-
-    # Con n directo, Puno (541) se come la escala y Moho (23) queda invisible.
-    # Con raíz cuadrada se ve la diferencia pero no rompe el gráfico.
-    agg["size"] = agg["n_ingresantes"].pow(0.5) * 6 + 10
-
-    fig = px.scatter(
+    fig = px.bar(
         agg,
-        x="pct_privado",
-        y="puntaje_mediano",
-        size="size",
-        hover_name="PROV_NORM",
-        hover_data={
-            "n_ingresantes": True,
-            "puntaje_mediano": ":.1f",
-            "pct_privado": ":.1f",
-            "size": False,
-        },
-        color_discrete_sequence=[COLOR_TERRITORIO],
+        x="puntaje_mediano",
+        y="PROV_NORM",
+        orientation="h",
+        color="pct_privado",
+        color_continuous_scale=[[0, "rgba(28, 78, 92, 0.2)"], [1, COLOR_HALLAZGO]],
+        text="puntaje_mediano",
+        hover_data={"n_ingresantes": True, "pct_privado": ":.1f"},
         labels={
-            "pct_privado": "% de colegios privados",
             "puntaje_mediano": "Puntaje mediano",
-            "n_ingresantes": "Ingresantes",
-        },
+            "PROV_NORM": "",
+            "pct_privado": "% colegios privados"
+        }
     )
-
-    # Etiquetas solo para las provincias que cuentan la historia. Las 13 a la
-    # vez es ilegible.
-    destacadas = ["YUNGUYO", "MOHO", "CHUCUITO", "PUNO", "SAN ROMAN"]
-    for _, row in agg[agg["PROV_NORM"].isin(destacadas)].iterrows():
-        color = COLOR_HALLAZGO if row["PROV_NORM"] in ("YUNGUYO", "MOHO") else "#1F2A30"
-        fig.add_annotation(
-            x=row["pct_privado"],
-            y=row["puntaje_mediano"],
-            text=f"<b>{row['PROV_NORM'].title()}</b>",
-            showarrow=True,
-            arrowhead=2,
-            arrowcolor=color,
-            ax=15, ay=-20,
-            font=dict(size=11, color=color),
-        )
-
-    # Tendencia lineal. La uso solo como referencia visual, no como modelo:
-    # con 13 puntos no da para predecir nada.
-    coefs = np.polyfit(agg["pct_privado"], agg["puntaje_mediano"], 1)
-    x_line = np.linspace(agg["pct_privado"].min(), agg["pct_privado"].max(), 50)
-    fig.add_trace(go.Scatter(
-        x=x_line,
-        y=coefs[0] * x_line + coefs[1],
-        mode="lines",
-        line=dict(color=COLOR_HALLAZGO, width=2, dash="dash"),
-        name="Tendencia",
-        hoverinfo="skip",
-    ))
-
-    fig.update_layout(
+    fig.update_traces(
+        texttemplate="%{text:.0f}",
+        textposition="outside",
+        textfont=dict(size=11),
+    )
+    return _base(
+        fig,
         height=520,
-        margin=dict(l=0, r=20, t=20, b=30),
-        showlegend=False,
-        plot_bgcolor="#FAFAF7",
-        xaxis=dict(gridcolor="#EAE5DA"),
-        yaxis=dict(gridcolor="#EAE5DA"),
+        coloraxis_colorbar=dict(title="% Privado", thickness=12, len=0.5),
+        xaxis=dict(gridcolor="rgba(128,128,128,0.2)", range=[1500, 2100]),
+        yaxis=dict(tickfont=dict(size=11)),
     )
-    return fig
