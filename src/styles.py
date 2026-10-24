@@ -7,7 +7,7 @@ from src.constants import COLOR_TERRITORIO, COLOR_HALLAZGO
 
 CSS = f"""
 <style>
-/* --- Hero (portada) --- */
+/* --- Hero --- */
 .hero {{
     padding: 2rem 0 2rem 0;
     border-bottom: 1px solid rgba(128, 128, 128, 0.2);
@@ -48,7 +48,8 @@ CSS = f"""
     border-radius: 0 6px 6px 0;
 }}
 .hero-tesis strong {{
-    color: {COLOR_TERRITORIO};
+    color: var(--text-color);
+    opacity: 0.6;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.1em;
@@ -157,7 +158,6 @@ CSS = f"""
     overflow: hidden;
 }}
 
-/* Ocultar la barra de herramientas de Plotly */
 .js-plotly-plot .plotly .modebar {{
     display: none !important;
 }}
@@ -182,13 +182,13 @@ CSS = f"""
 def aplicar_estilos():
     st.markdown(CSS, unsafe_allow_html=True)
 
-def hero(eyebrow, titulo, subtitulo, tesis):
+def hero(eyebrow, titulo, subtitulo, idea_central):
     st.markdown(f"""
         <div class="hero">
             <div class="hero-eyebrow">{eyebrow}</div>
             <h1>{titulo}</h1>
             <p class="hero-subtitle">{subtitulo}</p>
-            <div class="hero-tesis"><strong>Tesis · </strong>{tesis}</div>
+            <div class="hero-tesis"><strong>Idea central · </strong>{idea_central}</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -204,7 +204,6 @@ def section_header(numero, titulo, subtitulo):
     """, unsafe_allow_html=True)
 
 def metric_card(valor, etiqueta, hint=None, color=None):
-    # Si no se pasa color, usamos el texto por defecto para evitar problemas en dark mode
     color_style = f"color: {color};" if color else ""
     hint_html = f'<div class="metric-hint">{hint}</div>' if hint else ""
     st.markdown(f"""
