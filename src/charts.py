@@ -23,26 +23,15 @@ def _base(fig, **overrides):
         font=dict(family=FUENTE, size=12),
         margin=dict(l=10, r=10, t=20, b=10),
         hoverlabel=dict(font=dict(family=FUENTE, size=12)),
+        # Forzamos a que el fondo del mapa sea transparente
+        geo=dict(bgcolor="rgba(0,0,0,0)"),
     )
     layout.update(overrides)
     fig.update_layout(**layout)
     return fig
 
-_COLORBAR = dict(
-    title="",
-    thickness=10,
-    len=0.45,
-    yanchor="bottom", y=0.02,
-    xanchor="right", x=0.98,
-    tickfont=dict(size=10),
-)
-
 def mapa_nacional(agg_deptos, geo_deptos):
-    # Hacemos una copia para no modificar el original
     df = agg_deptos.copy()
-    # Aplicamos log1p. Con 1795 en Puno y 39 en Cusco, la escala lineal hacía 
-    # que Cusco sea invisible. Con log, Cusco se ve (log(39) ~ 3.6) y Puno 
-    # sigue marcando la diferencia (log(1795) ~ 7.5).
     df["n_log"] = np.log1p(df["n_ingresantes"])
 
     fig = px.choropleth(
@@ -57,13 +46,12 @@ def mapa_nacional(agg_deptos, geo_deptos):
     )
     fig.update_geos(fitbounds="locations", visible=False)
 
+    # En el mapa nacional ocultamos la colorbar. Al usar logaritmo la escala no
+    # es lineal y confunde. El hover y el texto debajo dan el dato exacto.
     return _base(
         fig, 
         height=550, 
-        coloraxis_colorbar=_COLORBAR,
-        # Ocultamos los ticks del logaritmo para que no confunda, ya que 
-        # el hover muestra el número real.
-        coloraxis_colorbar_tickvals=[], 
+        coloraxis_showscale=False
     )
 
 def _centroides_puno(geo_provincias):
@@ -101,11 +89,26 @@ def mapa_puno(agg_provincias, geo_provincias):
             text=f"<b>{row['PROV_NORM'].title()}</b><br>{int(row['n_ingresantes'])}",
             showarrow=False,
             font=dict(size=10, color="white"),
-            bgcolor="rgba(0,0,0,0.4)",
+            bgcolor="rgba(0,0,0,0.5)",
             borderpad=3,
         )
 
-    return _base(fig, height=550, coloraxis_colorbar=_COLORBAR)
+    # Ponemos la colorbar en horizontal abajo del mapa, para que no se 
+    # descuadre hacia los costados.
+    return _base(
+        fig, 
+        height=550, 
+        coloraxis_colorbar=dict(
+            title="",
+            orientation="h",
+            thickness=12,
+            len=0.6,
+            y=-0.1,
+            x=0.5,
+            xanchor="center",
+            yanchor="top",
+        )
+    )
 
 def barras_externos(df):
     externos = df[df["DEPTO_NORM"] != "PUNO"]
@@ -113,7 +116,6 @@ def barras_externos(df):
     conteo.columns = ["depto", "n"]
     conteo = conteo.sort_values("n", ascending=True)
 
-    # Usamos un color sólido. El gradiente se perdía con valores bajos (3, 1).
     fig = px.bar(
         conteo,
         x="n", y="depto",
@@ -215,7 +217,6 @@ def barras_genero_carrera(df):
     )
 
 def _acortar_carrera(nombre):
-    # (Mismo diccionario de antes)
     reemplazos = {
         "EDUCACIÓN SECUNDARIA DE LA ESPECIALIDAD DE MATEMÁTICA, FÍSICA, COMPUTACIÓN E INFORMÁTICA": "Ed. Sec. Matemática/Física",
         "EDUCACIÓN SECUNDARIA DE LA ESPECIALIDAD DE CIENCIAS SOCIALES": "Ed. Sec. Ciencias Sociales",
@@ -265,8 +266,6 @@ def barras_brecha_escolar(agg_provincias):
         y="PROV_NORM",
         orientation="h",
         color="pct_privado",
-        # Cambiamos la escala. Ahora el mínimo es un azul claro pero visible 
-        # (no transparente) y el máximo es naranja.
         color_continuous_scale=[[0, "#60A5FA"], [1, COLOR_HALLAZGO]],
         text="puntaje_mediano",
         hover_data={"n_ingresantes": True, "pct_privado": ":.1f"},
@@ -284,7 +283,13 @@ def barras_brecha_escolar(agg_provincias):
     return _base(
         fig,
         height=520,
-        coloraxis_colorbar=dict(title="% Privado", thickness=12, len=0.5),
+        coloraxis_colorbar=dict(
+            title="% Privado", 
+            thickness=12, 
+            len=0.5,
+            y=0.5, # Centrar verticalmente
+            yanchor="middle"
+        ),
         xaxis=dict(gridcolor="rgba(128,128,128,0.2)", range=[1500, 2100]),
         yaxis=dict(tickfont=dict(size=11)),
     )
