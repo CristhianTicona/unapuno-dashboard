@@ -87,7 +87,7 @@ with col_m4:
 st.markdown("")
 col_muestra, col_resumen = st.columns([3, 2])
 with col_muestra:
-    st.markdown("**Algunas filas (identificadores hasheados)**")
+    st.markdown("#### Algunas filas (identificadores hasheados)")
     muestra = df[[
         "SEXO", "DEPARTAMENTO_PROCEDENCIA", "PROVINCIA_PROCEDENCIA",
         "ESCUELA_PROFESIONAL", "TIPO_COLEGIO_NORM", "PUNTAJE",
@@ -96,7 +96,7 @@ with col_muestra:
     st.caption("Mostramos 8 de 1.890 registros. La fuente original viene hasheada.")
 
 with col_resumen:
-    st.markdown("**Resumen de columnas**")
+    st.markdown("#### Resumen de columnas")
     cols_internas = {"PROV_NORM", "DEPTO_NORM", "UBIGEO_DIST", "UBIGEO_PROV_RAW", "UBIGEO_DEP_RAW", "TIPO_COLEGIO_NORM"}
     mapa_tipos = {"object": "texto", "int64": "entero", "float64": "decimal"}
     metadatos = []
@@ -109,7 +109,7 @@ with col_resumen:
         })
     st.dataframe(pd.DataFrame(metadatos), use_container_width=True, hide_index=True, height=320)
 
-st.markdown("**¿Cómo se compone el dataset por proceso de admisión?**")
+st.markdown("#### ¿Cómo se compone el dataset por proceso de admisión?")
 _, col_donut, _ = st.columns([1, 2, 1])
 with col_donut:
     st.plotly_chart(donut_proceso(df), use_container_width=True, config=PLOTLY_CONFIG)
@@ -122,26 +122,26 @@ section_header("01", TITULO_SECCION_1, SUBTITULO_SECCION_1)
 
 col1, col2 = st.columns(2)
 with col1:
-    st.markdown("**Vista nacional**")
+    st.markdown("#### Vista nacional")
     st.plotly_chart(mapa_nacional(agg_deptos, geo_deptos), use_container_width=True, config=PLOTLY_CONFIG)
     st.caption("El 94.8% viene de Puno. El resto es goteo del sur.")
 
 with col2:
-    st.markdown("**Zoom a Puno**")
+    st.markdown("#### Zoom a Puno")
     st.plotly_chart(mapa_puno(agg_provincias, geo_provincias), use_container_width=True, config=PLOTLY_CONFIG)
     st.caption("La capital aporta 30.2%. Juliaca (San Román) 18.4%. El 51.4% restante viene de las otras 11 provincias.")
 
 st.markdown("")
-st.markdown("**¿Y los que vienen de fuera de Puno?**")
+st.markdown("#### ¿Y los que vienen de fuera de Puno?")
 st.markdown("Son **98 ingresantes (5.2%)** en 12 departamentos. Analizamos si tenían perfil propio y no: el puntaje medio es casi idéntico (1908 vs 1913).")
 
 col_ext_graf, col_ext_datos = st.columns([2, 1])
 with col_ext_graf:
     st.plotly_chart(barras_externos(df), use_container_width=True, config=PLOTLY_CONFIG)
 with col_ext_datos:
-    st.markdown("**Carreras más elegidas:**")
+    st.markdown("##### Carreras más elegidas:")
     st.markdown("- Turismo: 8\n- Ing. Mecánica Eléctrica: 5\n- Medicina Veterinaria: 5\n- Odontología: 5")
-    st.markdown("**Modalidad:**")
+    st.markdown("##### Modalidad:")
     st.markdown("- Examen General: 56\n- CEPREUNA: 30\n- Primeros Puestos: 6")
 
 st.caption(FUENTE_GRAFICOS)
