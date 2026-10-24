@@ -179,7 +179,7 @@ section_header("03", TITULO_SECCION_3, SUBTITULO_SECCION_3)
 st.plotly_chart(barras_brecha_escolar(agg_provincias), use_container_width=True, config=PLOTLY_CONFIG)
 
 insight_box(
-    "<strong>Que nos indica?:</strong> el largo de la barra es el puntaje mediano de la provincia, "
+    "<strong>Que nos indica:</strong> el largo de la barra es el puntaje mediano de la provincia, "
     "y el color indica el % de colegios privados.<br><br>"
     "• <strong>Yunguyo</strong>: casi sin colegios privados, pero segundo mejor puntaje.<br>"
     "• <strong>Moho</strong>: mejor puntaje y 30% privado, pero solo 23 ingresantes.<br>"
