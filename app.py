@@ -6,7 +6,7 @@ import streamlit as st
 import pandas as pd
 
 from src.constants import (
-    EYEBROW, TITULO_APP, SUBTITULO_APP, TESIS,
+    EYEBROW, TITULO_APP, SUBTITULO_APP, IDEA_CENTRAL,
     TITULO_SECCION_1, SUBTITULO_SECCION_1,
     TITULO_SECCION_2, SUBTITULO_SECCION_2,
     TITULO_SECCION_3, SUBTITULO_SECCION_3,
@@ -40,14 +40,12 @@ agg_deptos = datos["agg_departamentos"]
 geo_provincias = datos["geo_provincias"]
 geo_deptos = datos["geo_departamentos"]
 
-# --- Sidebar (sin filtros, solo metadatos) ---
 with st.sidebar:
     st.title("Sobre el dashboard")
     st.markdown(
         "Este análisis se basa en los datos de los ingresantes a la Universidad "
         "Nacional del Altiplano en el proceso 2024-I."
     )
-
     with st.expander("Fuente y licencia", expanded=True):
         st.markdown("""
         - **Fuente:** Plataforma Nacional de Datos Abiertos
@@ -55,7 +53,6 @@ with st.sidebar:
         - **Licencia:** Open Data Commons Attribution
         - **Periodo:** 2024-I
         """)
-
     with st.expander("Decisiones de limpieza"):
         st.markdown("""
         - El UBIGEO original no seguía el estándar INEI. Puno aparecía con código `20` y las provincias estaban desalineadas. Cruzamos con el mapa por **nombre**, no por código.
@@ -63,15 +60,13 @@ with st.sidebar:
         - `TIPO_COLEGIO` venía en 5 variantes → lo agrupamos en 3.
         """)
 
-# --- Portada ---
 hero(
     eyebrow=EYEBROW,
     titulo=TITULO_APP,
     subtitulo=SUBTITULO_APP,
-    tesis=TESIS,
+    idea_central=IDEA_CENTRAL,
 )
 
-# --- Metadatos ---
 st.markdown("### El dataset en números")
 st.markdown(
     "Antes de la historia, los datos. Corte transversal del proceso 2024-I: "
@@ -182,7 +177,7 @@ insight_box(
     "• <strong>Yunguyo</strong>: casi sin colegios privados, pero segundo mejor puntaje.<br>"
     "• <strong>Moho</strong>: mejor puntaje y 30% privado, pero solo 23 ingresantes.<br>"
     "• <strong>Chucuito</strong>: peor puntaje, con 7% privado.<br><br>"
-    "El origen escolar importa, pero no marca el destino. Esa es la idea de esta sección."
+    "El origen escolar importa, pero no marca el destino."
 )
 
 st.caption(FUENTE_GRAFICOS)
