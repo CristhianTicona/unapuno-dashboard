@@ -45,9 +45,9 @@ IDEA_CENTRAL = (
 
 TITULO_SECCION_1 = "¿De dónde vienen?"
 SUBTITULO_SECCION_1 = (
-    "Vista desde el Perú, la UNA Puno es un fenómeno casi exclusivamente "
-    "puntano. Vista desde Puno, es una red de 13 provincias donde la capital "
-    "aporta menos de un tercio."
+    "Si miramos todo el Perú, la UNA Puno recibe estudiantes casi exclusivamente "
+    "del departamento de Puno. Pero si hacemos zoom a las 13 provincias, la capital "
+    "solo aporta un tercio; el resto viene de las demás provincias."
 )
 
 TITULO_SECCION_2 = "¿Cómo se reparten?"
@@ -66,9 +66,9 @@ SUBTITULO_SECCION_3 = (
 
 CIERRE = (
     "La diversidad territorial de la UNA Puno es real, pero no garantiza "
-    "equidad interna: la brecha de género en la elección de carrera es total, "
-    "y la diferencia educativa entre provincias no se explica solo por el tipo "
-    "de colegio de origen."
+    "igualdad entre sus estudiantes: la brecha de género en la elección de "
+    "carrera es total, y la diferencia educativa entre provincias no se explica "
+    "solo por el tipo de colegio de origen."
 )
 
 PLOTLY_CONFIG = {"displayModeBar": False, "displaylogo": False}
