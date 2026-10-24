@@ -1,7 +1,6 @@
 """
-Carga de datos.
-Todas las rutas son relativas (Path(__file__)), así funciona igual en local,
-en GitHub y en Streamlit Cloud. No hay rutas de Colab.
+Carga de datos y limpieza básica.
+Las rutas son relativas para que funcione en Streamlit Cloud sin problemas.
 """
 
 import unicodedata
@@ -16,11 +15,10 @@ from src.constants import (
     RUTA_AGG_DEPARTAMENTOS,
 )
 
-
 def normalizar_nombre(s):
-    # Mayúsculas, sin tildes, espacios colapsados. Sirve para cruzar nombres
-    # entre el dataset y el shapefile cuando los códigos no son confiables
-    # (que es exactamente nuestro caso).
+    # Pasamos todo a mayúsculas y sacamos las tildes. 
+    # Lo usamos porque el dataset original tenía el ubigeo mal, 
+    # así que cruzamos el mapa por nombre en vez de por código.
     if pd.isna(s):
         return ""
     s = str(s).upper().strip()
@@ -28,9 +26,6 @@ def normalizar_nombre(s):
                 if unicodedata.category(c) != "Mn")
     return " ".join(s.split())
 
-
-# Sin decoradores de caché acá. El caché se maneja un nivel arriba, en app.py
-# con @st.cache_data. Tener ambos al mismo tiempo puede generar reruns.
 def cargar_ingresantes():
     df = pd.read_parquet(RUTA_INGRESANTES)
     if "PROV_NORM" not in df.columns:
@@ -39,22 +34,17 @@ def cargar_ingresantes():
         df["DEPTO_NORM"] = df["DEPARTAMENTO_PROCEDENCIA"].apply(normalizar_nombre)
     return df
 
-
 def cargar_agg_provincias():
     return pd.read_csv(RUTA_AGG_PROVINCIAS)
-
 
 def cargar_agg_departamentos():
     return pd.read_csv(RUTA_AGG_DEPARTAMENTOS)
 
-
 def cargar_geo_provincias():
     return gpd.read_file(RUTA_GEO_PROVINCIAS)
 
-
 def cargar_geo_departamentos():
     return gpd.read_file(RUTA_GEO_DEPARTAMENTOS)
-
 
 def cargar_todo():
     return {
