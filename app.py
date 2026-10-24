@@ -71,11 +71,12 @@ hero(
 )
 
 # --- El dataset en números ---
-st.markdown("### El dataset en números")
+st.markdown("### Exploracion del Dataset")
 st.markdown(
-    "Antes de la historia, los datos. Corte transversal del proceso 2024-I: "
-    "1.890 ingresantes con 25 variables demográficas, geográficas y académicas. "
-    "No hay serie temporal."
+    "Empezamos presentando los datos. Son 1.890 ingresantes del proceso 2024-I, "
+    "con 25 columnas que describen su origen, género, tipo de colegio y puntaje. "
+    "Como solo tenemos este periodo, no podemos analizar tendencias en el tiempo, "
+    "sino que es una foto fija de este año."
 )
 
 col_m1, col_m2, col_m3, col_m4 = st.columns(4)
