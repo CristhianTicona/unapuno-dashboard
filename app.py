@@ -159,17 +159,17 @@ section_header("02", TITULO_SECCION_2, SUBTITULO_SECCION_2)
 
 g1, g2, g3, g4 = st.columns(4)
 with g1:
-    metric_card("96 pts", "Brecha de género", hint="Entre la carrera con más y menos mujeres")
+    metric_card("96%", "Diferencia", hint="Ed. Inicial (100% F) vs Ing. Mecánica (4% F)")
 with g2:
-    metric_card("Ed. Inicial", "Más feminizada", hint="100% F", color=COLOR_FEMENINO)
+    metric_card("Ed. Inicial", "Más feminizada", hint="100% mujeres", color=COLOR_FEMENINO)
 with g3:
-    metric_card("Ing. Mecánica Eléctrica", "Más masculinizada", hint="4% F", color=COLOR_MASCULINO)
+    metric_card("Ing. Mecánica Eléctrica", "Más masculinizada", hint="4% mujeres", color=COLOR_MASCULINO)
 with g4:
     metric_card("44", "Carreras", hint="analizadas")
 
 st.markdown("")
 st.plotly_chart(barras_genero_carrera(df), use_container_width=True, config=PLOTLY_CONFIG)
-st.caption("Cada barra va del eje central hacia el porcentaje correspondiente. La línea punteada marca el 50%.")
+st.caption("Cada barra va del eje central hacia el porcentaje correspondiente. La línea punteada marca el 50%. La diferencia entre los extremos es de 96 puntos porcentuales.")
 st.caption(FUENTE_GRAFICOS)
 divider()
 
