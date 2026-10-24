@@ -1,5 +1,5 @@
 """
-Funciones de gráficos.
+Funciones que arman los gráficos.
 """
 
 import numpy as np
@@ -7,12 +7,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from src.constants import (
-    COLOR_TERRITORIO,
-    COLOR_HALLAZGO,
-    COLOR_SECUNDARIO,
-    COLOR_FEMENINO,
-    COLOR_MASCULINO,
-    ESCALA_CALOR,
+    COLOR_TERRITORIO, COLOR_HALLAZGO, COLOR_SECUNDARIO,
+    COLOR_FEMENINO, COLOR_MASCULINO, ESCALA_CALOR,
 )
 
 FUENTE = "Source Sans Pro, -apple-system, sans-serif"
@@ -29,6 +25,7 @@ def _base(fig, **overrides):
     return fig
 
 def _base_mapa(fig, **overrides):
+    # Fondo transparente para que el mapa se adapte al modo oscuro/claro
     layout = dict(
         template="streamlit",
         font=dict(family=FUENTE, size=12),
@@ -50,16 +47,14 @@ def _base_mapa(fig, **overrides):
     )
     layout.update(overrides)
     fig.update_layout(**layout)
-    
-    fig.update_geos(
-        fitbounds="locations", 
-        visible=False,
-        bgcolor="rgba(0,0,0,0)",
-    )
+    fig.update_geos(fitbounds="locations", visible=False, bgcolor="rgba(0,0,0,0)")
     return fig
 
 def mapa_nacional(agg_deptos, geo_deptos):
     df = agg_deptos.copy()
+    # Aplicamos logaritmo (log1p) al color. Como Puno tiene 1795 y Cusco 39,
+    # en escala normal Cusco se veía del mismo color que el fondo. Con el 
+    # logaritmo logramos que se note la presencia de los otros departamentos.
     df["n_log"] = np.log1p(df["n_ingresantes"])
 
     fig = px.choropleth(
@@ -73,8 +68,8 @@ def mapa_nacional(agg_deptos, geo_deptos):
         labels={"n_ingresantes": "Ingresantes", "DEPARTAMEN": "Departamento"},
     )
 
-    # Calculamos los ticks reales (0, 10, 100...) y los ubicamos 
-    # en la escala logarítmica para que la barra de la derecha muestre los números.
+    # Como usamos logaritmo, la barra de colores mostraría números raros (0, 2, 4).
+    # Le forzamos los ticks reales calculando la posición en la escala logarítmica.
     ticks_pos = [np.log1p(x) for x in [0, 10, 100, 500, 1000, 1800]]
     ticks_lbl = ["0", "10", "100", "500", "1000", "1800"]
 
@@ -93,6 +88,9 @@ def mapa_nacional(agg_deptos, geo_deptos):
     )
 
 def _centroides_puno(geo_provincias):
+    # Geopandas tira warning si calculas centroides en lat/lon.
+    # Pasamos el mapa a UTM 19S (que es la zona de Puno), calculamos el centro 
+    # y volvemos a lat/lon para que Plotly lo dibuje.
     en_utm = geo_provincias.to_crs(32719)
     return en_utm.geometry.centroid.to_crs(4326)
 
@@ -116,6 +114,8 @@ def mapa_puno(agg_provincias, geo_provincias):
         },
     )
 
+    # Ponemos el nombre y el número arriba de cada provincia para que no 
+    # haya que pasar el mouse. Letras blancas con fondo oscuro para que se lean bien.
     cent = geo_provincias.copy()
     cent["cx"] = _centroides_puno(geo_provincias).x.values
     cent["cy"] = _centroides_puno(geo_provincias).y.values
@@ -144,6 +144,7 @@ def mapa_puno(agg_provincias, geo_provincias):
     )
 
 def barras_externos(df):
+    # Filtramos a los que no son de Puno para ver de dónde vienen los 98 externos.
     externos = df[df["DEPTO_NORM"] != "PUNO"]
     conteo = externos["DEPARTAMENTO_PROCEDENCIA"].value_counts().reset_index()
     conteo.columns = ["depto", "n"]
@@ -188,6 +189,7 @@ def donut_proceso(df):
         marker=dict(line=dict(color="rgba(0,0,0,0.2)", width=2)),
         hovertemplate="<b>%{label}</b><br>%{value} ingresantes (%{percent})<extra></extra>"
     )
+    # Le ponemos el número total en el medio del agujero para que se vea mejor.
     fig.add_annotation(
         text=f"<b>{total:,}</b><br><span style='font-size:12px;'>ingresantes</span>",
         x=0.5, y=0.5, showarrow=False,
@@ -210,6 +212,8 @@ def barras_genero_carrera(df):
 
     fig = go.Figure()
 
+    # Hacemos las barras divergentes: los hombres van hacia la izquierda (negativo)
+    # y las mujeres hacia la derecha (positivo).
     fig.add_trace(go.Bar(
         y=tabla["carrera_corta"],
         x=-tabla["pct_masculino"],
@@ -250,6 +254,8 @@ def barras_genero_carrera(df):
     )
 
 def _acortar_carrera(nombre):
+    # Algunos nombres son larguísimos. Hice este diccionario a mano 
+    # porque un split por comas o palabras no daba buenos resultados.
     reemplazos = {
         "EDUCACIÓN SECUNDARIA DE LA ESPECIALIDAD DE MATEMÁTICA, FÍSICA, COMPUTACIÓN E INFORMÁTICA": "Ed. Sec. Matemática/Física",
         "EDUCACIÓN SECUNDARIA DE LA ESPECIALIDAD DE CIENCIAS SOCIALES": "Ed. Sec. Ciencias Sociales",
@@ -293,6 +299,9 @@ def _acortar_carrera(nombre):
 def barras_brecha_escolar(agg_provincias):
     agg = agg_provincias.sort_values("puntaje_mediano", ascending=True).copy()
 
+    # Hacemos barras horizontales porque es más fácil comparar el largo (puntaje)
+    # y el color nos da el % de privados al mismo tiempo. 
+    # El degradado va de azul claro (poco privado) a naranja (mucho privado).
     fig = px.bar(
         agg,
         x="puntaje_mediano",
