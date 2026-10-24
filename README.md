@@ -45,19 +45,21 @@ El archivo original tenía varios errores que tuvimos que arreglar antes de graf
 
 Hay 98 ingresantes (5.2%) que no son de Puno. Revisamos si tenían algo especial, pero no: su puntaje promedio es casi igual al de los puneños (1908 vs 1913) y se reparten en 34 carreras distintas. Como no eran un grupo con un perfil diferente, decidimos dejarlos como un gráfico secundario en la primera sección.
 
-## Por qué elegimos estos colores
+## Paleta de colores
 
-Usamos 5 colores fijos y un par de degradados para los mapas. La idea era que los colores ayuden a entender el gráfico, no que sean solo decorativos:
+Usamos una paleta fija para que el dashboard sea consistente. La idea es que un mismo color siempre signifique lo mismo, así el lector no tiene que adivinar qué está mirando.
 
-| Color | Hex | Dónde se usa | Por qué |
-| :--- | :--- | :--- | :--- |
-| Azul petróleo | `#1C4E5C` | Mapas y gráfico de externos. | Es un color serio, que va bien con la temática del lago Titicaca. |
-| Naranja quemado | `#D97B29` | Porción de CEPREUNA y casos especiales (Moho, Yunguyo). | Resalta fuerte. Lo usamos solo para llamar la atención sobre lo importante. |
-| Verde andino | `#6A8A3A` | Porción de Extraordinario en la dona. | Sirve para diferenciar la tercera categoría sin tapar al naranja. |
-| Azul acero | `#2E5C8A` | Barras de hombres y tarjeta de Ingeniería. | Diferencia la categoría masculina de forma clara. |
-| Magenta apagado | `#C6517C` | Barras de mujeres y tarjeta de Educación Inicial. | Diferencia la categoría femenina sin usar rosa claro, que se lee mal en pantalla. |
+| Color | Hex | Dónde se usa exactamente |
+| :--- | :--- | :--- |
+| Azul petróleo | `#1C4E5C` | - En los mapas (provincias y departamentos con más ingresantes).<br>- En las barras de ingresantes de otros departamentos.<br>- En la porción "GENERAL" del gráfico de dona.<br>- En las barras de los hombres (Sección 02). |
+| Naranja quemado | `#D97B29` | - En la porción "CEPREUNA" del gráfico de dona.<br>- Para resaltar los casos atípicos de la Sección 03 (Moho, Yunguyo).<br>- En los porcentajes más altos de colegios privados. |
+| Verde andino | `#6A8A3A` | - En la porción "EXTRAORDINARIO" del gráfico de dona. |
+| Magenta apagado | `#C6517C` | - En las barras de las mujeres (Sección 02). |
+| Azul acero | `#2E5C8A` | - En las barras de los hombres (Sección 02) y en la etiqueta de la carrera "Ing. Mecánica Eléctrica". |
 
-**La regla principal:** el naranja solo aparece en los puntos que queremos que el profesor mire primero (como los casos raros de la Sección 03). Si lo usáramos en todos lados, ya no resaltaría nada.
+**Regla de uso:** El naranja se usa únicamente para señalar cosas que queremos que el lector mire con atención (como los casos raros de Moho y Yunguyo). El resto de los colores se mantienen fijos para cada categoría, de modo que si en el mapa un departamento es oscuro, en el gráfico de barras ese mismo tono signifique lo mismo.
+
+Para los mapas y el gráfico de la Sección 03, usamos un degradado (de gris claro a azul petróleo, o de azul claro a naranja) porque los valores son continuos. Esto ayuda a ver de un vistazo dónde están los puntajes más bajos y los más altos.
 
 ## ¿Cómo está armado el código?
 
