@@ -3,7 +3,7 @@
 Este es el trabajo final del curso de Visualización de Datos. Armamos un dashboard interactivo con los datos de los 1.890 estudiantes que ingresaron a la Universidad Nacional del Altiplano (UNAP) en el proceso 2024-I.
 
 - **Dashboard:** [https://unapuno-dashboard.streamlit.app/](https://unapuno-dashboard.streamlit.app/)
-- **Repositorio:** [https://github.com/CristhianTicona/unapuno-dashboard.git](https://github.com/CristhianTicona/unapuno-dashboard.git)
+- **Repositorio:** [https://github.com/sisruss-cmyk/unapuno-dashboard](https://github.com/sisruss-cmyk/unapuno-dashboard)
 
 ## Datos del grupo
 
